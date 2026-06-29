@@ -1,0 +1,44 @@
+class Position {
+    constructor(
+        public readonly x: number,
+        public readonly y: number,
+        public readonly z: number = 0,
+    ) { }
+
+    shift({ x = 0, y = 0, z = 0 }: { x?: number, y?: number, z?: number }) {
+        return new Position(
+            this.x + x,
+            this.y + y,
+            this.z + z,
+        )
+    }
+
+    add(p: Position) {
+        return new Position(
+            this.x + p.x,
+            this.y + p.y,
+            this.z + p.z,
+        )
+    }
+
+    toHalf(p: Position) {
+        return new Position(
+            (this.x + p.x) / 2,
+            (this.y + p.y) / 2,
+            (this.z + p.z) / 2,
+        )
+    }
+
+    get sde() {
+        return `(position ${this.x} ${this.y} ${this.z})`
+    }
+}
+
+const position = (
+    x: number, y: number, z: number = 0,
+) => new Position(x, y, z)
+
+export {
+    Position,
+    position,
+}
