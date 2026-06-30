@@ -15,15 +15,18 @@ const contact = (ctx: string[]) => {
 
     let contact_names: string[] = []
 
-    const add = (
+    type addParams = {
         name: string,
-        ...ctts: ContactType[]
-    ) => {
+        contacts: ContactType[],
+    }
+    const add = ({
+        name, contacts,
+    }: addParams) => {
         if (!contact_names.includes(name)) {
             contact_names.push(name)
             ctx.push(define_contact_set(name))
         }
-        ctts.map(({ position, shape, remove = false }) => {
+        contacts.map(({ position, shape, remove = false }) => {
             ctx.push(set_contact(
                 (shape === 'edge')
                     ? (find_edge_id(position))

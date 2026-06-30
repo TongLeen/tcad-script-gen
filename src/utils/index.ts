@@ -21,7 +21,7 @@ class Position {
         )
     }
 
-    toHalf(p: Position) {
+    midpoint(p: Position) {
         return new Position(
             (this.x + p.x) / 2,
             (this.y + p.y) / 2,

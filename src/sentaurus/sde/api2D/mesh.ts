@@ -10,9 +10,14 @@ import {
     offset_interface,
 } from "../core/dr"
 
-import type { RefinementFunction } from "../core/dr"
+import type { RefinementFunction as _RefinementFunction } from "../core/dr"
 
 const mesh = <M extends string>(ctx: string[]) => {
+    type RefinementFunction =
+        | { func: "MaxTransDiff", value: number }
+        | { func: "MaxLenInt", interface: [string, string], value: number, factor: number, double_side?: boolean, use_region_names: true }
+        | { func: "MaxLenInt", interface: [M, M], value: number, factor: number, double_side?: boolean, use_region_names?: false }
+
     type refineParams = {
         name: string,
         dx: [number, number],
