@@ -49,7 +49,7 @@ const dop = <M extends string, D extends string>(ctx: string[]) => {
                 break
             case 'region':
                 ctx.push(
-                    define_constant_profile_region(`${name}.plc_cstdop`, `${name}.cstdop`, kw.region)
+                    define_constant_profile_region(`${name}.plc_cstdop`, `${name}.cstdop`, `${kw.region}.region`)
                 )
                 break
         }

@@ -47,7 +47,7 @@ const mesh = <M extends string>(ctx: string[]) => {
                 break
             case 'region':
                 ctx.push(
-                    define_refinement_region(`${name}.plc_refine`, `${name}.refine`, kw.region)
+                    define_refinement_region(`${name}.plc_refine`, `${name}.refine`, `${kw.region}.region`)
                 )
                 break
         }
@@ -73,9 +73,9 @@ const mesh = <M extends string>(ctx: string[]) => {
     const offset = ({
         maxlevel, ...kw
     }: offsetParams) => {
-        ctx.push(offset_block(maxlevel, kw.kind, (kw.kind === 'material') ? kw.material : kw.region))
+        ctx.push(offset_block(maxlevel, kw.kind, (kw.kind === 'material') ? kw.material : `${kw.region}.region`))
         ctx.push(...kw.targets.map((v: OffsetTarget<string>) =>
-            offset_interface(v.value, v.factor, kw.kind, [(kw.kind === 'material') ? kw.material : kw.region, v.target])
+            offset_interface(v.value, v.factor, kw.kind, [(kw.kind === 'material') ? kw.material : `${kw.region}.region`, v.target])
         ))
     }
 
