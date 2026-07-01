@@ -1,14 +1,17 @@
 {
-  "name": "tcad-script-gen",
-  "version": "0.1.0",
+  "name": "@tongleen/tcad-script-gen",
+  "version": "0.1.1",
   "module": "index.ts",
   "type": "module",
   "private": false,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.3.14"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "preinstall": "npx only-allow bun"
