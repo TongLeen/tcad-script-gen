@@ -83,7 +83,7 @@ const define_gaussian_profile = ({
     }
 
     if (lateral !== undefined) {
-        retval.push(`"${lateral.dist}"`, '"Factor"', `"${lateral.factor}"`)
+        retval.push(`"${lateral.dist}"`, '"Factor"', `${lateral.factor}`)
     }
 
     return `(sdedr:define-gaussian-profile ${retval.join(' ')})`
