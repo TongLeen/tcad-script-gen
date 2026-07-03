@@ -13,6 +13,14 @@ class Position {
         )
     }
 
+    shiftX(x: number) {
+        return this.shift({ x })
+    }
+
+    shiftY(y: number) {
+        return this.shift({ y })
+    }
+
     add(p: Position) {
         return new Position(
             this.x + p.x,
