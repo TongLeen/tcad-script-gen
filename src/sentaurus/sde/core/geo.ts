@@ -5,7 +5,7 @@ const create_rectangle = (
 ) => `(sdegeo:create-rectangle ${p0.sde} ${p1.sde} "${material}" "${name}")`
 const create_polygon = (
     positions: Position[], material: string, name: string,
-) => `(sdegeo:create-polygon ${positions.map((v) => v.sde).join(' ')} "${material}" "${name}")`
+) => `(sdegeo:create-polygon (list ${positions.map((v) => v.sde).join(' ')}) "${material}" "${name}")`
 
 
 const bool_unite = (

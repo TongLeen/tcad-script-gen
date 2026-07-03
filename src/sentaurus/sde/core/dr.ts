@@ -217,7 +217,7 @@ const formatDecayReplace = (
     }
     if (replace !== undefined) {
         retval.push(
-            (replace === 'Replace')
+            (replace === 'NoReplace')
                 ? ''
                 : replace
         )
