@@ -80,7 +80,7 @@ const formatElectrode = (e: ElectrodeType) => {
     retval.push(`Name="${e.Name}"`)
     switch (e.kind) {
         case "voltage":
-            retval.push(`Voltage="${formatPWL(e.Voltage)}"`)
+            retval.push(`Voltage=${formatPWL(e.Voltage)}`)
             if (e.EqOhmic) retval.push("EqOhmic")
             if (e.Resist) retval.push(`Resist=${e.Resist}`)
             if (e.DistResist) retval.push(`DistResist=${e.DistResist}`)
@@ -105,10 +105,10 @@ const formatElectrode = (e: ElectrodeType) => {
             }
             break
         case "current":
-            retval.push(`Current="${formatPWL(e.Current)}"`)
+            retval.push(`Current=${formatPWL(e.Current)}`)
             break
         case "charge":
-            retval.push(`Charge="${formatPWL(e.Charge)}"`)
+            retval.push(`Charge=${formatPWL(e.Charge)}`)
             if (e.FGcap) retval.push(`FGcap=(value=${e.FGcap.value} name="${e.FGcap.name}")`);
             if (e.CombineSemiAndContactCharges) retval.push("CombineSemiAndContactCharges");
             break
@@ -127,7 +127,7 @@ const formatPWL = (pwl: number | { [key: number]: number }) => {
         return `${pwl}`
     }
     const pairs = Object.entries(pwl)
-        .map((k, v) => `${v} at ${k}`)
+        .map(([k, v]) => `${v} at ${k}`)
     return `( ${pairs.join(', ')} )`
 }
 
