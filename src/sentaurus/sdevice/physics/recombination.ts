@@ -16,11 +16,27 @@ type Recombination = {
 }
 
 const formatRecombination = (rec: Recombination) => {
-
+    let retval: string[] = ["Recombination", "("]
+    const { Avalanche, eAvalanche, hAvalanche, Auger, Radiative, SRH, CDL, ConstantCarrierGeneration, Band2Band, ...flags } = rec
+    if (Avalanche) retval.push("Avalanche", "(", ...formatAvalanche(Avalanche), ")")
+    if (eAvalanche) retval.push("eAvalanche", "(", ...formatAvalanche(eAvalanche), ")")
+    if (hAvalanche) retval.push("hAvalanche", "(", ...formatAvalanche(hAvalanche), ")")
+    if (Auger !== undefined) {
+        if (Auger === true) retval.push("Auger")
+        else retval.push("Auger(WithGeneration)")
+    }
+    if (Radiative !== undefined) retval.push(`${Radiative ? '+' : '-'}Radiative`)
+    if (SRH) retval.push("SRH", "(", ...formatSRH(SRH), ")")
+    if (CDL) retval.push("CDL", "(", ...formatSRH(CDL), ")")
+    if (ConstantCarrierGeneration) retval.push(`ConstantCarrierGeneration(value=${ConstantCarrierGeneration})`)
+    if (Band2Band) retval.push("Band2Band", "(", ...formatBand2Band(Band2Band), ")")
+    Object.keys(flags).forEach((v) => retval.push(v))
+    retval.push(")")
+    return retval
 }
 
 type Avalanche = {
-    BandgapDependence?: boolean
+    BandgapDependence?: true
     DrivingForce?:
     | "ElectricField"
     | "Eparallel"
@@ -38,7 +54,7 @@ type Avalanche = {
 const formatAvalanche = (raw: Avalanche) => {
     const { BandgapDependence, DrivingForce, model } = raw
     const ret: string[] = []
-    if (BandgapDependence) ret.push((BandgapDependence ? "+" : "-") + "BandgapDependence")
+    if (BandgapDependence) ret.push("BandgapDependence")
     if (DrivingForce) ret.push(DrivingForce)
     if (model) ret.push(model)
     return ret

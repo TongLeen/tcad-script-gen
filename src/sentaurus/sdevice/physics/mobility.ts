@@ -9,32 +9,42 @@ type Mobility = {
     ToCurrentEnormal?: Enormal
 
     PhuMob?: true | "Arsenic" | "Phosphorus"
-    CarrierCarrierScattering?: "BrooksHerring" | "ConwellWeisskopf"
+    CarrierCarrierScattering?: true | "BrooksHerring" | "ConwellWeisskopf"
     ConstantMobility?: boolean
-
-    BandTailHighFieldSaturation?: never
-    eBandTailHighFieldSaturation?: never
-    hBandTailHighFieldSaturation?: never
-
-    BTCSMob?: never
-
-    BalMob?: { Lch: number }
-    CNTMob?: { Lch: number },
 
     Diffusivity?: HighFieldSaturation
     eDiffusivity?: HighFieldSaturation
     hDiffusivity?: HighFieldSaturation
 
     IncompleteIonization?: true
-
     MultiValley?: true
-
     Tunneling?: boolean
 }
 
 const formatMobility = (m: Mobility) => {
     let retval: string[] = []
-
+    if (m.DopingDependence) retval.push("DopingDependence", "(", ...formatDopingDependence(m.DopingDependence), ")")
+    if (m.HighFieldSaturation) retval.push("HighFieldSaturation", "(", ...formatHighFieldSaturation(m.HighFieldSaturation), ")")
+    if (m.eHighFieldSaturation) retval.push("eHighFieldSaturation", "(", ...formatHighFieldSaturation(m.eHighFieldSaturation), ")")
+    if (m.hHighFieldSaturation) retval.push("hHighFieldSaturation", "(", ...formatHighFieldSaturation(m.hHighFieldSaturation), ")")
+    if (m.Enormal) retval.push("Enormal", "(", ...formatEnormal(m.Enormal), ")")
+    if (m.ToCurrentEnormal) retval.push("ToCurrentEnormal", "(", ...formatEnormal(m.ToCurrentEnormal), ")")
+    if (m.PhuMob) {
+        if (m.PhuMob === true) retval.push("PhuMob")
+        else retval.push(`PhuMob(${m.PhuMob})`)
+    }
+    if (m.CarrierCarrierScattering) {
+        if (m.CarrierCarrierScattering === true) retval.push("CarrierCarrierScattering")
+        else retval.push(`CarrierCarrierScattering(${m.CarrierCarrierScattering})`)
+    }
+    if (m.ConstantMobility !== undefined) retval.push((m.ConstantMobility ? '+' : '-') + "ConstantMobility")
+    if (m.Diffusivity) retval.push()
+    if (m.Diffusivity) retval.push("Diffusivity", "(", ...formatHighFieldSaturation(m.Diffusivity), ")")
+    if (m.eDiffusivity) retval.push("eDiffusivity", "(", ...formatHighFieldSaturation(m.eDiffusivity), ")")
+    if (m.hDiffusivity) retval.push("hDiffusivity", "(", ...formatHighFieldSaturation(m.hDiffusivity), ")")
+    if (m.IncompleteIonization) retval.push("IncompleteIonization")
+    if (m.MultiValley) retval.push("MultiValley")
+    if (m.Tunneling !== undefined) retval.push((m.Tunneling ? "+" : "-") + "Tunneling")
     return retval
 }
 
