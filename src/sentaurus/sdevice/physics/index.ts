@@ -10,16 +10,17 @@ import {
     type EffectiveIntrinsicDensity,
     type IncompleteIonization,
 } from './misc'
-import { type Trap } from "./trap"
+import { formatTraps, type Trap } from "./trap"
 
 
-type PhysicsType<M extends string, D extends string> =
-    | PhysicsConfigGlobal & PhysicsConfigCommon<D>
-    | PhysicsConfigMaterial<M> & PhysicsConfigCommon<D>
-    | PhysicsConfigRegion & PhysicsConfigCommon<D>
-    | PhysicsConfigMaterialInterface<M> & PhysicsConfigCommon<D>
-    | PhysicsConfigRegionInterface & PhysicsConfigCommon<D>
+type PhysicsType<M extends string, D extends string> = (
+    | PhysicsConfigGlobal
+    | PhysicsConfigMaterial<M>
+    | PhysicsConfigRegion
+    | PhysicsConfigMaterialInterface<M>
+    | PhysicsConfigRegionInterface
     | PhysicsConfigContact
+) & PhysicsConfigCommon<D>
 
 
 type PhysicsConfigMaterial<M extends string> = {
@@ -87,15 +88,55 @@ type PhysicsConfigGlobal = {
 
     Thermodynamic?: true | "HLLTunnelingRecGenHeat"
     Temperature?: number
-    PostTemperature?: true | "IV_diss" | string
+    PostTemperature?: true | { IV_diss: true | string }
 
-    Hydrodunamic?: true | "eTemperature" | "hTemperature"
+    Hydrodynamic?: true | "eTemperature" | "hTemperature"
 
-    eBarrierTunneling?: [string, BarrierTunneling]
-    hBarrierTunneling?: [string, BarrierTunneling]
+    eBarrierTunneling?: Record<string, BarrierTunneling | null>
+    hBarrierTunneling?: Record<string, BarrierTunneling | null>
 
     Fermi?: true | "-WithJoyceDixon" | "WithFukushima"
     FermiForTEPAnalytic?: true
+}
+
+const formatGlobal = (raw: PhysicsConfigGlobal) => {
+    let retval: string[] = []
+
+    if (raw.DefaultParametersFromFile) retval.push("DefaultParametersFromFile")
+    if (raw.AreaFactor) retval.push(`AreaFactor=${raw.AreaFactor}`)
+    if (raw.Thermodynamic !== undefined) {
+        if (raw.Thermodynamic === true) retval.push("Thermodynamic")
+        else retval.push(`Thermodynamic(${raw.Thermodynamic})`)
+    }
+    if (raw.Temperature !== undefined) retval.push(`Temperature=${raw.Temperature}`)
+    if (raw.PostTemperature !== undefined) {
+        const p = raw.PostTemperature
+        if (p === true) retval.push("PostTemperature")
+        else if (p.IV_diss === true) retval.push("PostTemperature(IV_diss)")
+        else retval.push(`PostTemperature(IV_diss(${p.IV_diss}))`)
+    }
+    if (raw.Hydrodynamic) {
+        if (raw.Hydrodynamic === true) retval.push("Hydrodunamic")
+        else retval.push(`Hydrodunamic(${raw.Hydrodynamic})`)
+    }
+    if (raw.eBarrierTunneling) {
+        Object.entries(raw.eBarrierTunneling).forEach(([name, ebt]) => {
+            retval.push("eBarrierTunneling", `"${name}"`)
+            if (ebt) retval.push("(", ...formatBarrierTunneling(ebt), ")")
+        })
+    }
+    if (raw.hBarrierTunneling) {
+        Object.entries(raw.hBarrierTunneling).forEach(([name, hbt]) => {
+            retval.push("hBarrierTunneling", `"${name}"`)
+            if (hbt) retval.push("(", ...formatBarrierTunneling(hbt), ")")
+        })
+    }
+    if (raw.Fermi) {
+        if (raw.Fermi === true) retval.push("Fermi")
+        else retval.push(`Fermi(${raw.Fermi})`)
+    }
+    if (raw.FermiForTEPAnalytic) retval.push("FermiForTEPAnalytic")
+    return retval
 }
 
 type PhysicsConfigBulk = {
@@ -115,6 +156,21 @@ type PhysicsConfigBulk = {
     TEPower?: "Analytic" | "Tabulated_Si"
 }
 
+const formatBulk = (raw: PhysicsConfigBulk) => {
+    let retval: string[] = []
+    if (raw.EffectiveIntrinsicDensity)
+        retval.push("EffectiveIntrinsicDensity", "(", ...formatEffectiveIntrinsicDensity(raw.EffectiveIntrinsicDensity), ")")
+    if (raw.Mobility) retval.push("Mobility", "(", ...formatMobility(raw.Mobility), ")")
+    if (raw.eMobility) retval.push("eMobility", "(", ...formatMobility(raw.eMobility), ")")
+    if (raw.hMobility) retval.push("hMobility", "(", ...formatMobility(raw.hMobility), ")")
+    if (raw.eQuasiFermi) retval.push(`eQuasiFermi=${raw.eQuasiFermi}`)
+    if (raw.hQuasiFermi) retval.push(`hQuasiFermi=${raw.hQuasiFermi}`)
+    if (raw.Traps) retval.push("Traps", "(", ...(() => raw.Traps.map(formatTraps).map((v) => ["(", ...v, ")"]).flat())(), ")")
+    if (raw.GaussianDOS_full) retval.push("GaussianDOS_full")
+    if (raw.HeatPreFactor) retval.push(`HeatPreFactor=${raw.HeatPreFactor}`)
+    if (raw.TEPower) retval.push(`TEPower(${raw.TEPower})`)
+    return retval
+}
 
 type PhysicsConfigInterface = {
     Dipole?: true
