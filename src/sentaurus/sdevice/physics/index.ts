@@ -58,7 +58,26 @@ type PhysicsConfigCommon<D extends string> = {
         force: "strain" | "stress"
         activation?: number
     }
-    LatticTemperatureLimit?: number
+    LatticeTemperatureLimit?: number
+}
+
+const formatCommon = <D extends string>(raw: PhysicsConfigCommon<D>) => {
+    let retval: string[] = []
+    if (raw.Recombination) retval.push(...formatRecombination(raw.Recombination))
+    if (raw.Aniso) retval.push(...formatAniso(raw.Aniso))
+    if (raw.IncompleteIonization) retval.push(...formatIncompleteIonization(raw.IncompleteIonization))
+    if (raw.BreakdownProbability) {
+        const a = raw.BreakdownProbability.InterpolatedDiscretization ? "InterpolatedDiscretization" : ''
+        const b = raw.BreakdownProbability.MinElectricField === undefined ? '' : `MinElectricField=${raw.BreakdownProbability.MinElectricField}`
+        retval.push(`BreakdownProbability( ${a} ${b})`)
+    }
+    if (raw.Piezoelectric_Polarization) {
+        const f = raw.Piezoelectric_Polarization.force
+        const a = raw.Piezoelectric_Polarization.activation === undefined ? '' : `activation=${raw.Piezoelectric_Polarization.activation}`
+        retval.push(`Piezoelectric_Polarization(${f} ${a})`)
+    }
+    if (raw.LatticeTemperatureLimit) retval.push(`LatticeTemperatureLimit=${raw.LatticeTemperatureLimit}`)
+    return retval
 }
 
 type PhysicsConfigGlobal = {
