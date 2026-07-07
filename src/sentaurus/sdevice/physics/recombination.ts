@@ -19,30 +19,21 @@ type Recombination = {
 
 const formatRecombination = (rec: Recombination) => {
     let retval: string[] = []
-    const { formatFlag, formatSwitch, formatBlock } = useFormatUtils(retval)
-    const { Auger, ConstantCarrierGeneration } = rec
+    const { formatFlag, formatSwitch, formatBlock, formatAssignment } = useFormatUtils(retval)
     formatFlag(rec, "SurfaceSRC")
     formatFlag(rec, "TrapAssistedAuger")
     formatFlag(rec, "intrinsicRicher")
     formatBlock(rec, "Avalanche", formatAvalanche)
     formatBlock(rec, "eAvalanche", formatAvalanche)
     formatBlock(rec, "hAvalanche", formatAvalanche)
-    // if (Avalanche) retval.push("Avalanche", "(", ...formatAvalanche(Avalanche), ")")
-    // if (eAvalanche) retval.push("eAvalanche", "(", ...formatAvalanche(eAvalanche), ")")
-    // if (hAvalanche) retval.push("hAvalanche", "(", ...formatAvalanche(hAvalanche), ")")
-    if (Auger !== undefined) {
-        if (Auger === true) retval.push("Auger")
-        else retval.push("Auger(WithGeneration)")
-    }
+    formatBlock(rec, "Auger", (e) => {
+        return e === true ? [] : [e]
+    })
     formatSwitch(rec, "Radiative")
     formatBlock(rec, "SRH", formatSRH)
     formatBlock(rec, "CDL", formatSRH)
     formatBlock(rec, "Band2Band", formatBand2Band)
-    // if (Radiative !== undefined) retval.push(`${Radiative ? '+' : '-'}Radiative`)
-    // if (SRH) retval.push("SRH", "(", ...formatSRH(SRH), ")")
-    // if (CDL) retval.push("CDL", "(", ...formatSRH(CDL), ")")
-    // if (Band2Band) retval.push("Band2Band", "(", ...formatBand2Band(Band2Band), ")")
-    if (ConstantCarrierGeneration) retval.push(`ConstantCarrierGeneration(value=${ConstantCarrierGeneration})`)
+    formatAssignment(rec, "ConstantCarrierGeneration", (k, v) => `${k}(value=${v})`)
     return retval
 }
 
