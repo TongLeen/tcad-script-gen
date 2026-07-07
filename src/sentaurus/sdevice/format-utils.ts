@@ -20,7 +20,7 @@ const useFormatUtils = (ctx: string[]) => {
             const v = raw[field]
             if (v !== undefined && v !== null) {
                 if (formatter !== undefined) ctx.push(formatter(field, v))
-                ctx.push(`${field as string}=${v}`)
+                else ctx.push(`${field as string}=${v}`)
             }
         }
     const formatBlock =
