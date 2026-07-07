@@ -82,6 +82,7 @@ type HighFieldSaturation = {
     | "CarrierTempDriveSpline"
     | "Eparallel"
     | "EparallelToInterface"
+    | "ElectricField"
     model?:
     | "CaugheyThomas"
     | "DensityDependentVsat"

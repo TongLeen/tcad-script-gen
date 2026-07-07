@@ -256,7 +256,7 @@ const physicsGenerator = <M extends string, D extends string>(ctx: string[]) => 
                 break
         }
         retval.push(...formatCommon(p), "}")
-        return retval
+        ctx.push(...retval)
     }
     return phy;
 }
