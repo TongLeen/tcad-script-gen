@@ -24,10 +24,12 @@ export default useSdevice;
 
 
 const format = (cmds: string[]) => {
+    let cmds_no_empty_parenthese = removeAdjacentParensOnce(cmds)
+
     let lines: [number, string][] = []
 
     let level: number = 0
-    for (const t of cmds) {
+    for (const t of cmds_no_empty_parenthese) {
         if (t === '}' || t === ')') {
             level--;
         }
@@ -40,4 +42,19 @@ const format = (cmds: string[]) => {
     return lines
         .map(([l, v]) => `${'    '.repeat(l)}${v}`)
         .join('\n');
+}
+
+const removeAdjacentParensOnce = (tokens: string[]) => {
+    const result: string[] = [];
+    let i = 0;
+    while (i < tokens.length) {
+        // 检查当前及下一个是否是 "(" 和 ")"
+        if (i + 1 < tokens.length && tokens[i] === "(" && tokens[i + 1] === ")") {
+            i += 2; // 直接跳过这一对，不加入结果
+        } else {
+            result.push(tokens[i] as string);
+            i++;
+        }
+    }
+    return result;
 }
