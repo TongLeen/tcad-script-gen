@@ -11,6 +11,7 @@ import {
     type IncompleteIonization,
 } from './misc'
 import { formatTraps, type Trap } from "./trap"
+import useFormatUtils from "../format-utils"
 
 
 type PhysicsType<M extends string, D extends string> = (
@@ -49,6 +50,9 @@ type PhysicsConfigContact = {
     BarrierLowering?: true
 }
 
+const formatContact = (raw: PhysicsConfigContact) => {
+    return (raw.BarrierLowering) ? ["BarrierLowering"] : []
+}
 
 type PhysicsConfigCommon<D extends string> = {
     Recombination?: Recombination
@@ -64,20 +68,24 @@ type PhysicsConfigCommon<D extends string> = {
 
 const formatCommon = <D extends string>(raw: PhysicsConfigCommon<D>) => {
     let retval: string[] = []
-    if (raw.Recombination) retval.push(...formatRecombination(raw.Recombination))
-    if (raw.Aniso) retval.push(...formatAniso(raw.Aniso))
-    if (raw.IncompleteIonization) retval.push(...formatIncompleteIonization(raw.IncompleteIonization))
-    if (raw.BreakdownProbability) {
-        const a = raw.BreakdownProbability.InterpolatedDiscretization ? "InterpolatedDiscretization" : ''
-        const b = raw.BreakdownProbability.MinElectricField === undefined ? '' : `MinElectricField=${raw.BreakdownProbability.MinElectricField}`
-        retval.push(`BreakdownProbability( ${a} ${b})`)
-    }
-    if (raw.Piezoelectric_Polarization) {
-        const f = raw.Piezoelectric_Polarization.force
-        const a = raw.Piezoelectric_Polarization.activation === undefined ? '' : `activation=${raw.Piezoelectric_Polarization.activation}`
-        retval.push(`Piezoelectric_Polarization(${f} ${a})`)
-    }
-    if (raw.LatticeTemperatureLimit) retval.push(`LatticeTemperatureLimit=${raw.LatticeTemperatureLimit}`)
+    const { formatAssignment, formatBlock } = useFormatUtils(retval)
+    formatBlock(raw, "Recombination", formatRecombination)
+    formatBlock(raw, "Aniso", formatAniso)
+    formatBlock(raw, "IncompleteIonization", formatIncompleteIonization)
+    formatBlock(raw, "BreakdownProbability", (e) => {
+        let l: string[] = []
+        const { formatAssignment, formatFlag } = useFormatUtils(l)
+        formatAssignment(e, "MinElectricField")
+        formatFlag(e, "InterpolatedDiscretization")
+        return l
+    })
+    formatBlock(raw, "Piezoelectric_Polarization", (e) => {
+        let l: string[] = [e.force]
+        const { formatAssignment } = useFormatUtils(l)
+        formatAssignment(e, "activation")
+        return l
+    })
+    formatAssignment(raw, "LatticeTemperatureLimit")
     return retval
 }
 
@@ -101,24 +109,25 @@ type PhysicsConfigGlobal = {
 
 const formatGlobal = (raw: PhysicsConfigGlobal) => {
     let retval: string[] = []
+    const { formatFlag, formatAssignment, formatBlock } = useFormatUtils(retval)
+    formatFlag(raw, "DefaultParametersFromFile")
+    formatFlag(raw, "FermiForTEPAnalytic")
+    formatAssignment(raw, "AreaFactor")
+    formatAssignment(raw, "Temperature")
+    formatBlock(raw, "Thermodynamic",
+        (e) => (e === true ? [] : [e]),
+    )
+    formatBlock(raw, "PostTemperature", (e) => {
+        if (e === true) return []
+        const { IV_diss } = e
+        if (IV_diss === true) return ["IV_diss"]
+        else return [`IV_diss(${IV_diss})`]
+    })
+    formatBlock(raw, "Hydrodynamic", (e) => {
+        if (e === true) return []
+        else return [e]
+    })
 
-    if (raw.DefaultParametersFromFile) retval.push("DefaultParametersFromFile")
-    if (raw.AreaFactor) retval.push(`AreaFactor=${raw.AreaFactor}`)
-    if (raw.Thermodynamic !== undefined) {
-        if (raw.Thermodynamic === true) retval.push("Thermodynamic")
-        else retval.push(`Thermodynamic(${raw.Thermodynamic})`)
-    }
-    if (raw.Temperature !== undefined) retval.push(`Temperature=${raw.Temperature}`)
-    if (raw.PostTemperature !== undefined) {
-        const p = raw.PostTemperature
-        if (p === true) retval.push("PostTemperature")
-        else if (p.IV_diss === true) retval.push("PostTemperature(IV_diss)")
-        else retval.push(`PostTemperature(IV_diss(${p.IV_diss}))`)
-    }
-    if (raw.Hydrodynamic) {
-        if (raw.Hydrodynamic === true) retval.push("Hydrodunamic")
-        else retval.push(`Hydrodunamic(${raw.Hydrodynamic})`)
-    }
     if (raw.eBarrierTunneling) {
         Object.entries(raw.eBarrierTunneling).forEach(([name, ebt]) => {
             retval.push("eBarrierTunneling", `"${name}"`)
@@ -131,11 +140,9 @@ const formatGlobal = (raw: PhysicsConfigGlobal) => {
             if (hbt) retval.push("(", ...formatBarrierTunneling(hbt), ")")
         })
     }
-    if (raw.Fermi) {
-        if (raw.Fermi === true) retval.push("Fermi")
-        else retval.push(`Fermi(${raw.Fermi})`)
-    }
-    if (raw.FermiForTEPAnalytic) retval.push("FermiForTEPAnalytic")
+    formatBlock(raw, "Fermi", (e) => {
+        return e === true ? [] : [e]
+    })
     return retval
 }
 
@@ -158,17 +165,21 @@ type PhysicsConfigBulk = {
 
 const formatBulk = (raw: PhysicsConfigBulk) => {
     let retval: string[] = []
-    if (raw.EffectiveIntrinsicDensity)
-        retval.push("EffectiveIntrinsicDensity", "(", ...formatEffectiveIntrinsicDensity(raw.EffectiveIntrinsicDensity), ")")
-    if (raw.Mobility) retval.push("Mobility", "(", ...formatMobility(raw.Mobility), ")")
-    if (raw.eMobility) retval.push("eMobility", "(", ...formatMobility(raw.eMobility), ")")
-    if (raw.hMobility) retval.push("hMobility", "(", ...formatMobility(raw.hMobility), ")")
-    if (raw.eQuasiFermi) retval.push(`eQuasiFermi=${raw.eQuasiFermi}`)
-    if (raw.hQuasiFermi) retval.push(`hQuasiFermi=${raw.hQuasiFermi}`)
-    if (raw.Traps) retval.push("Traps", "(", ...(() => raw.Traps.map(formatTraps).map((v) => ["(", ...v, ")"]).flat())(), ")")
-    if (raw.GaussianDOS_full) retval.push("GaussianDOS_full")
-    if (raw.HeatPreFactor) retval.push(`HeatPreFactor=${raw.HeatPreFactor}`)
-    if (raw.TEPower) retval.push(`TEPower(${raw.TEPower})`)
+    const { formatFlag, formatAssignment, formatBlock } = useFormatUtils(retval)
+    formatBlock(raw, "EffectiveIntrinsicDensity", formatEffectiveIntrinsicDensity)
+    formatBlock(raw, "Mobility", formatMobility)
+    formatBlock(raw, "eMobility", formatMobility)
+    formatBlock(raw, "hMobility", formatMobility)
+    formatAssignment(raw, "eQuasiFermi")
+    formatAssignment(raw, "hQuasiFermi")
+    formatAssignment(raw, "HeatPreFactor")
+    formatBlock(raw, "Traps", (e) => {
+        return e.map(formatTraps).map(
+            (v) => ["(", ...v, ")"],
+        ).flat()
+    })
+    formatFlag(raw, "GaussianDOS_full")
+    formatBlock(raw, "TEPower", (e) => [e])
     return retval
 }
 
@@ -193,9 +204,59 @@ type PhysicsConfigInterface = {
 type DistResist = number | "SchottkyResist"
 
 
+const formatInterface = (raw: PhysicsConfigInterface) => {
+    const retval: string[] = []
+    const { formatFlag, formatBlock, formatAssignment } = useFormatUtils(retval)
+    formatFlag(raw, "Dipole")
+    formatAssignment(raw, "DistResist")
+    formatAssignment(raw, "MSDistResist")
+    formatBlock(raw, "Traps", (e) => {
+        return e.map(formatTraps).map(
+            (v) => ["(", ...v, ")"],
+        ).flat()
+    })
+    formatAssignment(raw, "eRecVelocity")
+    formatAssignment(raw, "hRecVelocity")
+    formatFlag(raw, "HeteroInterface")
+    formatFlag(raw, "Schottky")
+    formatFlag(raw, "Schroedinger")
+    formatAssignment(raw, "TATNonlocalPathNC")
+    formatBlock(raw, "Thermionic", (e) => {
+        return e === true ? [] : [e]
+    })
+    return retval
+}
+
 const physicsGenerator = <M extends string, D extends string>(ctx: string[]) => {
     const phy = (p: PhysicsType<M, D>) => {
-
+        const retval: string[] = ["Physics"]
+        switch (p.kind) {
+            case "Global":
+                retval.push("{", ...formatGlobal(p))
+                break
+            case "Region":
+                retval.push(`(Region="${p.region}")`)
+                retval.push("{", ...formatBulk(p))
+                break
+            case "RegionInterface":
+                retval.push(`(RegionInterface="${p.regions.join('/')}")`)
+                retval.push("{", ...formatInterface(p))
+                break
+            case "Contact":
+                retval.push(`(Contact="${p.contact}")`)
+                retval.push("{", ...formatContact(p))
+                break
+            case "Material":
+                retval.push(`(Material="${p.material}")`)
+                retval.push("{", ...formatBulk(p))
+                break
+            case "MaterialInterface":
+                retval.push(`(MaterialInterface="${p.materials.join('/')}")`)
+                retval.push("{", ...formatInterface(p))
+                break
+        }
+        retval.push(...formatCommon(p), "}")
+        return retval
     }
     return phy;
 }

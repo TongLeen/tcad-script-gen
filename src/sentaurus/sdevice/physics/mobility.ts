@@ -1,3 +1,5 @@
+import useFormatUtils from "../format-utils"
+
 type Mobility = {
     DopingDependence?: DopingDependence
 
@@ -121,6 +123,8 @@ type EnormalLombardi = {
 const formatEnormalLombardi = (raw: EnormalLombardi) => {
     const ret: string[] = []
     const { AutoOrientation, ParameterSetName } = raw
+    const { formatSwitch } = useFormatUtils(ret)
+    formatSwitch(raw, "AutoOrientation")
     if (AutoOrientation) ret.push((AutoOrientation ? "+" : "-") + "AutoOrientation")
     if (ParameterSetName) ret.push(`ParameterSetName="${ParameterSetName}"`)
     return ret

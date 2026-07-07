@@ -91,7 +91,7 @@ type IncompleteIonization<D extends string = string> = {
 
 
 const formatIncompleteIonization = (raw: IncompleteIonization) => {
-    const ret: string[] = ["IncompleteIonization", "("]
+    const ret: string[] = []
     const { Dopants, Split } = raw
     if (Dopants) {
         ret.push(`Dopants="${Dopants.join(' ')}"`)
@@ -102,7 +102,6 @@ const formatIncompleteIonization = (raw: IncompleteIonization) => {
             `Weights=(${Split.Weight.join(' ')})`
         )
     }
-    ret.push(")")
     return ret
 }
 
