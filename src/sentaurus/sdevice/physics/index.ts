@@ -10,16 +10,16 @@ import {
     type EffectiveIntrinsicDensity,
     type IncompleteIonization,
 } from './misc'
-import { formatTraps, type Trap } from "./trap"
+import { formatTrap, type Trap } from "./trap"
 import useFormatUtils from "../format-utils"
 
 
 type PhysicsType<M extends string, D extends string> = (
     | PhysicsConfigGlobal
     | PhysicsConfigMaterial<M>
-    | PhysicsConfigRegion
+    | PhysicsConfigRegion<M>
     | PhysicsConfigMaterialInterface<M>
-    | PhysicsConfigRegionInterface
+    | PhysicsConfigRegionInterface<M>
     | PhysicsConfigContact
 ) & PhysicsConfigCommon<D>
 
@@ -27,22 +27,22 @@ type PhysicsType<M extends string, D extends string> = (
 type PhysicsConfigMaterial<M extends string> = {
     kind: "Material",
     material: M
-} & PhysicsConfigBulk
+} & PhysicsConfigBulk<M>
 
-type PhysicsConfigRegion = {
+type PhysicsConfigRegion<M extends string> = {
     kind: "Region",
     region: string
-} & PhysicsConfigBulk
+} & PhysicsConfigBulk<M>
 
 type PhysicsConfigMaterialInterface<M extends string> = {
     kind: "MaterialInterface",
     materials: [M, M]
-} & PhysicsConfigInterface
+} & PhysicsConfigInterface<M>
 
-type PhysicsConfigRegionInterface = {
+type PhysicsConfigRegionInterface<M extends string> = {
     kind: "RegionInterface",
     regions: [string, string]
-} & PhysicsConfigInterface
+} & PhysicsConfigInterface<M>
 
 type PhysicsConfigContact = {
     kind: 'Contact'
@@ -146,7 +146,7 @@ const formatGlobal = (raw: PhysicsConfigGlobal) => {
     return retval
 }
 
-type PhysicsConfigBulk = {
+type PhysicsConfigBulk<M extends string> = {
     EffectiveIntrinsicDensity?: EffectiveIntrinsicDensity
 
     Mobility?: Mobility
@@ -156,39 +156,40 @@ type PhysicsConfigBulk = {
     eQuasiFermi?: number
     hQuasiFermi?: number
 
-    Traps?: Trap[]
+    Traps?: Trap<"Bulk", M>[]
 
     GaussianDOS_full?: true
     HeatPreFactor?: number
     TEPower?: "Analytic" | "Tabulated_Si"
 }
 
-const formatBulk = (raw: PhysicsConfigBulk) => {
-    let retval: string[] = []
-    const { formatFlag, formatAssignment, formatBlock } = useFormatUtils(retval)
-    formatBlock(raw, "EffectiveIntrinsicDensity", formatEffectiveIntrinsicDensity)
-    formatBlock(raw, "Mobility", formatMobility)
-    formatBlock(raw, "eMobility", formatMobility)
-    formatBlock(raw, "hMobility", formatMobility)
-    formatAssignment(raw, "eQuasiFermi")
-    formatAssignment(raw, "hQuasiFermi")
-    formatAssignment(raw, "HeatPreFactor")
-    formatBlock(raw, "Traps", (e) => {
-        return e.map(formatTraps).map(
-            (v) => ["(", ...v, ")"],
-        ).flat()
-    })
-    formatFlag(raw, "GaussianDOS_full")
-    formatBlock(raw, "TEPower", (e) => [e])
-    return retval
-}
+const formatBulk =
+    <M extends string>(raw: PhysicsConfigBulk<M>) => {
+        let retval: string[] = []
+        const { formatFlag, formatAssignment, formatBlock } = useFormatUtils(retval)
+        formatBlock(raw, "EffectiveIntrinsicDensity", formatEffectiveIntrinsicDensity)
+        formatBlock(raw, "Mobility", formatMobility)
+        formatBlock(raw, "eMobility", formatMobility)
+        formatBlock(raw, "hMobility", formatMobility)
+        formatAssignment(raw, "eQuasiFermi")
+        formatAssignment(raw, "hQuasiFermi")
+        formatAssignment(raw, "HeatPreFactor")
+        formatBlock(raw, "Traps", (e) => {
+            return e.map(formatTrap)
+                .map((v) => ["(", ...v, ")"])
+                .flat()
+        })
+        formatFlag(raw, "GaussianDOS_full")
+        formatBlock(raw, "TEPower", (e) => [e])
+        return retval
+    }
 
-type PhysicsConfigInterface = {
+type PhysicsConfigInterface<M extends string> = {
     Dipole?: true
     DistResist?: DistResist
     MSDistResist?: DistResist
 
-    Traps?: Trap[]
+    Traps?: Trap<"Interface", M>[]
 
     eRecVelocity?: number
     hRecVelocity?: number
@@ -204,16 +205,16 @@ type PhysicsConfigInterface = {
 type DistResist = number | "SchottkyResist"
 
 
-const formatInterface = (raw: PhysicsConfigInterface) => {
+const formatInterface = <M extends string>(raw: PhysicsConfigInterface<M>) => {
     const retval: string[] = []
     const { formatFlag, formatBlock, formatAssignment } = useFormatUtils(retval)
     formatFlag(raw, "Dipole")
     formatAssignment(raw, "DistResist")
     formatAssignment(raw, "MSDistResist")
     formatBlock(raw, "Traps", (e) => {
-        return e.map(formatTraps).map(
-            (v) => ["(", ...v, ")"],
-        ).flat()
+        return e.map(formatTrap)
+            .map((v) => ["(", ...v, ")"]).
+            flat()
     })
     formatAssignment(raw, "eRecVelocity")
     formatAssignment(raw, "hRecVelocity")
