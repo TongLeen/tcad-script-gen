@@ -1,0 +1,44 @@
+type PlotType = (Scalar | Vector)[]
+
+type Scalar =
+    | "eQuasiFermi" | "hQuasiFermi"
+    | "eGradQuasiFermi" | "hGradQuasiFermi"
+
+    | "SRH"
+    | "Avalanche"
+    | "AvalancheGeneration" | "eAvalancheGeneration" | "hAvalancheGeneration"
+    | "MeanIonIntegral" | "eIonIntegral" | "hIonIntegral"
+
+    | "eMobility" | "hMobility"
+    | "eVelocity" | "hVelocity"
+
+    | "eEparallel" | "hEparallel"
+    | "ElectricField"
+
+    | "Doping" | "DonorConcentration" | "Acceptorconcentration"
+    | "IonizedDopingConcentration"
+    | "xMoleFraction"
+
+    | "SpaceCharge"
+    | "PE_Charge"
+    | "ConductionBand" | "ValenceBand" | "BandGap"
+    | "Affinity"
+
+    | "eInterfaceTrapConcentration" | "hInterfaceTrapConcentration"
+    | "eTrapConcentration" | "hTrapConcentration"
+
+
+type Vector =
+    | "Electricfield/Vector"
+    | "eCurrent/Vector" | "hCurrent/Vector"
+    | "TotalCurrent/Vector"
+    | "PE_Polarization/Vector"
+
+const plotGenerator = (ctx: string[]) => {
+    return (p: PlotType) => {
+        ctx.push("Plot", "{", ...p, "}")
+    }
+}
+
+export { plotGenerator };
+export type { PlotType };
