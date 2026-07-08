@@ -1,6 +1,7 @@
-type MathType = {
-
-}
+type MathType =
+    & ConvergenceControl
+    & ComputationControl
+    & ValueControl
 
 type ConvergenceControl = {
     RHSMin?: number
@@ -36,6 +37,19 @@ type Extrapolate = {
 }
 
 type LinearSolver = "Super" | "ParDiSo" | "ILS"
+    | {
+        solver: "ParDiSo",
+        IterativeRefinement?: boolean,
+        MultipleRHS?: boolean,
+        NonsymmetricPermutation?: boolean,
+        RecomputeNonsymmetricPermutation?: boolean,
+    }
+    | {
+        solver: "ILS",
+        MultipleRHS?: boolean,
+        Set?: number,
+    }
+
 type Method = LinearSolver | {
     main: "Blocked"
     sub: LinearSolver
@@ -49,22 +63,22 @@ type ValueControl = {
     RefDens_eGradQuasiFermi_ElectricField?: number
 }
 
-type NonlocalConfig = {
+type NonlocalConfig<M extends string> = {
     Electrode: string
     Digits: number
     Length: number
     EnergyResolution: number
     Direction: [number, number, number]
     MaxAngle: number
-    EndPoints: EndPoint[]
+    EndPoints?: EndPoint<M>[]
 }
-type EndPoint = {
+type EndPoint<M extends string> = {
     enable: boolean
-    material: string
+    material: M
 }
 
-const mathGenerator = (ctx: string[]) => {
-    const math = (m: MathType) => {
+const mathGenerator = <M extends string>(ctx: string[]) => {
+    const math = (m: MathType, nonlocalmesh?: Record<string, NonlocalConfig<M>>) => {
 
     }
     return math;

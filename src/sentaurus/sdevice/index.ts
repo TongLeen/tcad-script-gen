@@ -15,7 +15,7 @@ const useSdevice = <M extends string, D extends string>() => {
         file: fileGenerator(cmds),
         electrode: electrodeGenerator(cmds),
         physics: physicsGenerator<M, D>(cmds),
-        math: mathGenerator(cmds),
+        math: mathGenerator<M>(cmds),
         save,
     }
 }
