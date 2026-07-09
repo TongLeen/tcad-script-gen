@@ -5,23 +5,34 @@ import { electrodeGenerator } from "./electrode"
 import { physicsGenerator } from "./physics"
 import { mathGenerator } from "./math"
 import { plotGenerator } from "./plot"
+import { solveGenerator } from "./solve"
 
 const useSdevice = <M extends string, D extends string>() => {
     let cmds: string[] = []
 
+    const [api, solve_gen] = solveGenerator()
+
+    const generate = (pretty: boolean = false) => {
+        if (pretty) return format(cmds.concat(solve_gen()))
+        else return cmds.concat(solve_gen()).join(' ')
+    }
+
     const save = (filename: string) => {
-        Bun.write(filename, format(cmds))
+        Bun.write(filename, generate(true))
     }
 
     const run = (filename?: string) => {
         if (filename === undefined) {
             const uuid = crypto.randomUUID();
             const tmpfilepath = join(tmpdir(), uuid)
-            Bun.write(tmpfilepath, cmds.join(' '))
+            Bun.write(tmpfilepath, generate())
             const proc = Bun.spawnSync({
                 cmd: ["sdevice", tmpfilepath],
                 stdout: 'inherit',
                 stderr: 'inherit',
+            })
+            Bun.file(tmpfilepath).delete().catch((e) => {
+                console.warn(`File delete failure: ${e}`);
             })
             return proc.exitCode
         }
@@ -45,6 +56,7 @@ const useSdevice = <M extends string, D extends string>() => {
         physics: physicsGenerator<M, D>(cmds),
         math: mathGenerator<M>(cmds),
         plot: plotGenerator(cmds),
+        solve: api,
         save,
         run,
         runAndExit,
