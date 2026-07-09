@@ -1,44 +1,53 @@
-type PlotType = (Scalar | Vector)[]
+type PlotType = (Scalar | Vector)[];
 
 type Scalar =
-    | "eQuasiFermi" | "hQuasiFermi"
-    | "eGradQuasiFermi" | "hGradQuasiFermi"
-
+    | "eQuasiFermi"
+    | "hQuasiFermi"
+    | "eGradQuasiFermi"
+    | "hGradQuasiFermi"
     | "SRH"
     | "Avalanche"
-    | "AvalancheGeneration" | "eAvalancheGeneration" | "hAvalancheGeneration"
-    | "MeanIonIntegral" | "eIonIntegral" | "hIonIntegral"
-
-    | "eMobility" | "hMobility"
-    | "eVelocity" | "hVelocity"
-
-    | "eEparallel" | "hEparallel"
+    | "AvalancheGeneration"
+    | "eAvalancheGeneration"
+    | "hAvalancheGeneration"
+    | "MeanIonIntegral"
+    | "eIonIntegral"
+    | "hIonIntegral"
+    | "eMobility"
+    | "hMobility"
+    | "eVelocity"
+    | "hVelocity"
+    | "eEparallel"
+    | "hEparallel"
     | "ElectricField"
-
-    | "Doping" | "DonorConcentration" | "Acceptorconcentration"
+    | "Doping"
+    | "DonorConcentration"
+    | "Acceptorconcentration"
     | "IonizedDopingConcentration"
     | "xMoleFraction"
-
     | "SpaceCharge"
     | "PE_Charge"
-    | "ConductionBand" | "ValenceBand" | "BandGap"
+    | "ConductionBand"
+    | "ValenceBand"
+    | "BandGap"
     | "Affinity"
-
-    | "eInterfaceTrapConcentration" | "hInterfaceTrapConcentration"
-    | "eTrapConcentration" | "hTrapConcentration"
-
+    | "eInterfaceTrapConcentration"
+    | "hInterfaceTrapConcentration"
+    | "eTrapConcentration"
+    | "hTrapConcentration";
 
 type Vector =
     | "Electricfield/Vector"
-    | "eCurrent/Vector" | "hCurrent/Vector"
+    | "eCurrent/Vector"
+    | "hCurrent/Vector"
     | "TotalCurrent/Vector"
-    | "PE_Polarization/Vector"
+    | "PE_Polarization/Vector";
 
 const plotGenerator = (ctx: string[]) => {
     return (p: PlotType) => {
-        ctx.push("Plot", "{", ...p, "}")
-    }
-}
+        ctx.push("Plot", "{", ...p, "}");
+    };
+};
 
 export { plotGenerator };
 export type { PlotType };
