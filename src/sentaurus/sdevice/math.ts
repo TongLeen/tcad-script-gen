@@ -1,4 +1,5 @@
 import useFormatUtils from "./format-utils"
+import { formatMethod, type Method } from "./misc/linearsolver";
 
 type MathType =
     & ConvergenceControl
@@ -70,14 +71,15 @@ const formatComputationControl = (raw: ComputationControl) => {
             `NumberOfSolverThreads=${raw.Threads.Solver}`,
         )
     }
-    if (raw.Method !== undefined) {
-        const M = raw.Method
-        if (typeof M === 'object' && M.solver === 'Blocked') {
-            retval.push("Method=Blocked")
-            retval.push("SubMethod", "=", ...formatLinearSolver(M.sub))
-        }
-        else retval.push("Method", "=", ...formatLinearSolver(M))
-    }
+    if (raw.Method !== undefined) formatMethod(retval, raw.Method)
+    // if (raw.Method !== undefined) {
+    //     const M = raw.Method
+    //     if (typeof M === 'object' && M.solver === 'Blocked') {
+    //         retval.push("Method=Blocked")
+    //         retval.push("SubMethod", "=", ...formatLinearSolver(M.sub))
+    //     }
+    //     else retval.push("Method", "=", ...formatLinearSolver(M))
+    // }
     return retval
 }
 
@@ -90,43 +92,6 @@ type Extrapolate = {
     Order?: number
 }
 
-type LinearSolver = "Super" | "ParDiSo" | "ILS"
-    | {
-        solver: "ParDiSo",
-        IterativeRefinement?: boolean,
-        MultipleRHS?: boolean,
-        NonsymmetricPermutation?: boolean,
-        RecomputeNonsymmetricPermutation?: boolean,
-    }
-    | {
-        solver: "ILS",
-        MultipleRHS?: boolean,
-        Set?: number,
-    }
-const formatLinearSolver = (s: LinearSolver) => {
-    if (typeof s === 'string') return [s]
-
-    const retval: string[] = [s.solver, "("]
-    const { formatSwitch, formatAssignment } = useFormatUtils(retval)
-    switch (s.solver) {
-        case "ParDiSo":
-            formatSwitch(s, "IterativeRefinement")
-            formatSwitch(s, "MultipleRHS")
-            formatSwitch(s, "NonsymmetricPermutation")
-            formatSwitch(s, "RecomputeNonsymmetricPermutation")
-            break
-        case "ILS":
-            formatSwitch(s, "MultipleRHS")
-            formatAssignment(s, "Set")
-            break
-    }
-    retval.push(")")
-    return retval
-}
-type Method = LinearSolver | {
-    solver: "Blocked"
-    sub: LinearSolver
-}
 
 type ValueControl = {
     DirectCurrentComputation?: true
