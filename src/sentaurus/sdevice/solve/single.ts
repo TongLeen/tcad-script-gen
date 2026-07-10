@@ -1,5 +1,5 @@
-import useFormatUtils from "./format-utils";
-import { formatMethod, type Method } from "./misc/linearsolver";
+import { formatMethod, type Method } from "../misc/linearsolver";
+import useFormatUtils from "../format-utils";
 
 type Equation = "Poisson" | "Electron" | "Hole";
 type CoupledType = {
@@ -91,26 +91,5 @@ const formatSingle = (e: SingleType) => {
     return retval;
 };
 
-const solveGenerator = () => {
-    const buffer: string[] = [];
-
-    const single = (e: SingleType) => {
-        buffer.push(...formatSingle(e));
-    };
-
-    const quasistationary = () => {};
-    const transient = () => {};
-    const generate = () => {
-        return ["Solve", "{", ...buffer, "}"];
-    };
-    return [
-        {
-            single,
-            quasistationary,
-            transient,
-        },
-        generate,
-    ] as const;
-};
-
-export { solveGenerator };
+export { formatSingle };
+export type { SingleType };
