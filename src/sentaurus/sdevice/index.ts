@@ -12,20 +12,20 @@ const useSdevice = <M extends string, D extends string>() => {
 
     const [api, solve_gen] = solveGenerator();
 
-    const generate = (pretty: boolean = false) => {
-        if (pretty) return format(cmds.concat(solve_gen()));
-        else return cmds.concat(solve_gen()).join(" ");
+    const generate = () => {
+        return format(cmds.concat(solve_gen()));
     };
 
     const save = (filename: string) => {
-        Bun.write(filename, generate(true));
+        Bun.write(filename, generate());
     };
 
     const run = (filename?: string) => {
         if (filename === undefined) {
             const uuid = crypto.randomUUID();
-            const tmpfilepath = join(tmpdir(), uuid);
+            const tmpfilepath = join(tmpdir(), uuid) + ".cmd";
             Bun.write(tmpfilepath, generate());
+            console.log(`Write tmp cmd in '${tmpfilepath}'`);
             const proc = Bun.spawnSync({
                 cmd: ["sdevice", tmpfilepath],
                 stdout: "inherit",
