@@ -82,6 +82,7 @@ type Trap<T extends "Bulk" | "Interface", M extends string> = {
     Conc: number;
     eXsection?: number;
     hXsection?: number;
+    Add2TotalDoping?: true | "ChargedTraps";
     Material?: T extends "Interface" ? M : never;
     Region?: T extends "Interface" ? string : never;
 };
@@ -90,11 +91,15 @@ const formatTrap = <T extends "Bulk" | "Interface", M extends string>(
     t: Trap<T, M>,
 ) => {
     let retval: string[] = [t.type];
-    const { formatAssignment } = useFormatUtils(retval);
+    const { formatAssignment, formatBlock } = useFormatUtils(retval);
     formatAssignment(t, "Name", (k, v) => `${k}="${v}"`);
     formatAssignment(t, "Conc");
     formatAssignment(t, "eXsection");
     formatAssignment(t, "hXsection");
+    formatBlock(t, "Add2TotalDoping", (e) => {
+        if (e === true) return [];
+        else return [e];
+    });
     formatAssignment(t, "Material" as any);
     formatAssignment(t, "Region" as any);
     retval.push(...formatEnergeticDistribution(t.energeticDistribution));
