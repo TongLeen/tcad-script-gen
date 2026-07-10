@@ -1,7 +1,7 @@
-import { formatMethod, type Method } from "../misc/linearsolver";
-import useFormatUtils from "../format-utils";
+import { formatMethod, type Method } from "../../misc/linearsolver";
+import useFormatUtils from "../../format-utils";
+import type { Equation } from "../common/Equation";
 
-type Equation = "Poisson" | "Electron" | "Hole";
 type CoupledType = {
     kind: "Coupled";
     equations: Equation | Equation[];
