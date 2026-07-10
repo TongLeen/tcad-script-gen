@@ -17,10 +17,18 @@ const useSdevice = <M extends string, D extends string>() => {
     };
 
     const save = (filename: string) => {
-        Bun.write(filename, generate());
+        if (import.meta.main) {
+            Bun.write(filename, generate());
+        } else {
+            console.error("Cannot 'save' when running as a module.");
+        }
     };
 
     const run = (filename?: string) => {
+        if (!import.meta.main) {
+            console.error("Cannot 'run' when running as a module.");
+            return -1;
+        }
         if (filename === undefined) {
             const uuid = crypto.randomUUID();
             const tmpfilepath = join(tmpdir(), uuid) + ".cmd";
