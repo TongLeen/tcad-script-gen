@@ -45,7 +45,7 @@ const solveGenerator = () => {
         } else {
             params.push(...formatGoal(e.goal));
         }
-        return [
+        buffer.push(
             "Quasistationary",
             "(",
             ...params,
@@ -54,7 +54,7 @@ const solveGenerator = () => {
             ...formatSingle(e.equation),
             ...["Plot", "(", ...formatPlot(e.plot), ")"],
             "}",
-        ];
+        );
     };
     const transient = (e: TransientType) => {
         const params: string[] = [];
@@ -68,16 +68,16 @@ const solveGenerator = () => {
         formatAssignment(e, "Transient");
         formatAssignment(e, "InitialTime");
         formatAssignment(e, "FinalTime");
-        return [
+        buffer.push(
             "Transient",
             "(",
             ...params,
             ")",
             "{",
             ...formatSingle(e.equation),
-            ...formatPlot(e.plot),
+            ...["Plot", "(", ...formatPlot(e.plot), ")"],
             "}",
-        ];
+        );
     };
     const newCurrentPrefix = (prefix: string) => {
         buffer.push(`NewCurrentPrefix="${prefix}"`);
