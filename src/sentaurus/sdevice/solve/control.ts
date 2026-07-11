@@ -43,7 +43,7 @@ type DeviceGoalCharge = {
 const formatGoal = (e: DeviceGoalType) => {
     const retval: string[] = ["Goal", "{"];
     const { formatAssignment } = useFormatUtils(retval);
-    formatAssignment(e, "Name");
+    formatAssignment(e, "Name", (k, v) => `${k}="${v}"`);
     switch (e.paramater) {
         case "Voltage":
             formatAssignment(e, "Voltage");
