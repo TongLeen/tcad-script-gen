@@ -52,7 +52,7 @@ const solveGenerator = () => {
             ")",
             "{",
             ...formatSingle(e.equation),
-            ...formatPlot(e.plot),
+            ...["Plot", "(", ...formatPlot(e.plot), ")"],
             "}",
         ];
     };
@@ -79,14 +79,33 @@ const solveGenerator = () => {
             "}",
         ];
     };
+    const newCurrentPrefix = (prefix: string) => {
+        buffer.push(`NewCurrentPrefix="${prefix}"`);
+    };
+    const load = (l: PlotType) => {
+        buffer.push("Load", "(", ...formatPlot(l), ")");
+    };
+    const save = (s: PlotType) => {
+        buffer.push("Save", "(", ...formatPlot(s), ")");
+    };
     const generate = () => {
         return ["Solve", "{", ...buffer, "}"];
+    };
+    const setContact = (
+        Name: string,
+        mode: "Voltage" | "Current" | "Charge",
+    ) => {
+        buffer.push(`Set("${Name}" mode ${mode})`);
     };
     return [
         {
             single,
             quasistationary,
             transient,
+            newCurrentPrefix,
+            load,
+            save,
+            setContact,
         },
         generate,
     ] as const;
