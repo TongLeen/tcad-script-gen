@@ -18,7 +18,7 @@ const formatPlotTime = (e: PlotTime) => {
             if (v.intervals) retval.push(`intervals=${v.intervals}`);
             if (v.decade) retval.push("decade");
         }
-        if (index !== e.length) retval.push(";");
+        if (index !== e.length - 1) retval.push(";");
     });
     retval.push(")");
     return retval;
