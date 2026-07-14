@@ -220,7 +220,7 @@ const formatDecayReplace = (
         retval.push(
             (replace === 'NoReplace')
                 ? ''
-                : `"replace"`
+                : `"${replace}"`
         )
     }
 
