@@ -215,11 +215,12 @@ const formatDecayReplace = (
                 : `${decay.factor} Gauss`
         )
     }
+    else retval.push("0")
     if (replace !== undefined) {
         retval.push(
             (replace === 'NoReplace')
                 ? ''
-                : replace
+                : `"replace"`
         )
     }
 
