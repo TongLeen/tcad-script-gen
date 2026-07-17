@@ -76,16 +76,23 @@ const formatSpatialDistribution = (s: SpatialDistribution) => {
 
 type Trap<T extends "Bulk" | "Interface", M extends string> = {
     Name?: string;
-    type: "FixedCharge" | "Acceptor" | "Donor" | "eNeutral" | "hNeutral";
-    energeticDistribution: EnergeticDistribution;
-    spatialDistribution?: SpatialDistribution;
-    Conc: number;
-    eXsection?: number;
-    hXsection?: number;
-    Add2TotalDoping?: true | "ChargedTraps";
-    Material?: T extends "Interface" ? M : never;
-    Region?: T extends "Interface" ? string : never;
-};
+} & (
+    | {
+          type: "FixedCharge";
+      }
+    | {
+          type: "Acceptor" | "Donor" | "eNeutral" | "hNeutral";
+          energeticDistribution: EnergeticDistribution;
+          eXsection?: number;
+          hXsection?: number;
+      }
+) & {
+        spatialDistribution?: SpatialDistribution;
+        Conc: number;
+        Add2TotalDoping?: true | "ChargedTraps";
+        Material?: T extends "Interface" ? M : never;
+        Region?: T extends "Interface" ? string : never;
+    };
 
 const formatTrap = <T extends "Bulk" | "Interface", M extends string>(
     t: Trap<T, M>,
@@ -94,17 +101,21 @@ const formatTrap = <T extends "Bulk" | "Interface", M extends string>(
     const { formatAssignment, formatBlock } = useFormatUtils(retval);
     formatAssignment(t, "Name", (k, v) => `${k}="${v}"`);
     formatAssignment(t, "Conc");
-    formatAssignment(t, "eXsection");
-    formatAssignment(t, "hXsection");
     formatBlock(t, "Add2TotalDoping", (e) => {
         if (e === true) return [];
         else return [e];
     });
-    formatAssignment(t, "Material" as any);
-    formatAssignment(t, "Region" as any);
-    retval.push(...formatEnergeticDistribution(t.energeticDistribution));
     if (t.spatialDistribution !== undefined)
         retval.push(...formatSpatialDistribution(t.spatialDistribution));
+    formatAssignment(t, "Material" as any);
+    formatAssignment(t, "Region" as any);
+
+    if (t.type === "FixedCharge") return retval;
+
+    formatAssignment(t, "eXsection");
+    formatAssignment(t, "hXsection");
+    if (t.energeticDistribution)
+        retval.push(...formatEnergeticDistribution(t.energeticDistribution));
     return retval;
 };
 
