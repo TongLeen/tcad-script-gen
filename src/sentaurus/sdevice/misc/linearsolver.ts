@@ -1,4 +1,4 @@
-import useFormatUtils from "../format-utils";
+import SDeviceFormat from "../format";
 
 type LinearSolver =
     | "Super"
@@ -18,24 +18,22 @@ type LinearSolver =
       };
 const formatLinearSolver = (s: LinearSolver) => {
     if (typeof s === "string") return [s];
-
-    const retval: string[] = [s.solver, "("];
-    const { formatSwitch, formatAssignment } = useFormatUtils(retval);
-    switch (s.solver) {
-        case "ParDiSo":
-            formatSwitch(s, "IterativeRefinement");
-            formatSwitch(s, "MultipleRHS");
-            formatSwitch(s, "NonsymmetricPermutation");
-            formatSwitch(s, "RecomputeNonsymmetricPermutation");
-            break;
-        case "ILS":
-            formatSwitch(s, "MultipleRHS");
-            formatAssignment(s, "Set");
-            break;
-    }
-    retval.push(")");
-    return retval;
+    return [
+        s.solver,
+        "(",
+        ...SDeviceFormat(s)({
+            switch: [
+                "IterativeRefinement",
+                "MultipleRHS",
+                "NonsymmetricPermutation",
+                "RecomputeNonsymmetricPermutation",
+            ],
+            assign: ["Set"],
+        }),
+        ")",
+    ];
 };
+
 type Method =
     | LinearSolver
     | {
