@@ -51,6 +51,10 @@ const useSdevice = <M extends string, D extends string>() => {
         process.exit(run(filename));
     };
 
+    const raw = (raw: string) => {
+        cmds.push(raw);
+    };
+
     return {
         file: fileGenerator(cmds),
         electrode: electrodeGenerator(cmds),
@@ -58,6 +62,7 @@ const useSdevice = <M extends string, D extends string>() => {
         math: mathGenerator<M>(cmds),
         plot: plotGenerator(cmds),
         solve: api,
+        raw,
         save,
         run,
         runAndExit,
