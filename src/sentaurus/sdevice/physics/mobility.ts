@@ -1,4 +1,4 @@
-import useFormatUtils from "../format-utils";
+import SDeviceFormat from "../format";
 
 type Mobility = {
     DopingDependence?: DopingDependence;
@@ -23,87 +23,24 @@ type Mobility = {
     Tunneling?: boolean;
 };
 
-const formatMobility = (m: Mobility) => {
-    let retval: string[] = [];
-    if (m.DopingDependence)
-        retval.push(
-            "DopingDependence",
-            "(",
-            ...formatDopingDependence(m.DopingDependence),
-            ")",
-        );
-    if (m.HighFieldSaturation)
-        retval.push(
-            "HighFieldSaturation",
-            "(",
-            ...formatHighFieldSaturation(m.HighFieldSaturation),
-            ")",
-        );
-    if (m.eHighFieldSaturation)
-        retval.push(
-            "eHighFieldSaturation",
-            "(",
-            ...formatHighFieldSaturation(m.eHighFieldSaturation),
-            ")",
-        );
-    if (m.hHighFieldSaturation)
-        retval.push(
-            "hHighFieldSaturation",
-            "(",
-            ...formatHighFieldSaturation(m.hHighFieldSaturation),
-            ")",
-        );
-    if (m.Enormal)
-        retval.push("Enormal", "(", ...formatEnormal(m.Enormal), ")");
-    if (m.ToCurrentEnormal)
-        retval.push(
-            "ToCurrentEnormal",
-            "(",
-            ...formatEnormal(m.ToCurrentEnormal),
-            ")",
-        );
-    if (m.PhuMob) {
-        if (m.PhuMob === true) retval.push("PhuMob");
-        else retval.push(`PhuMob(${m.PhuMob})`);
-    }
-    if (m.CarrierCarrierScattering) {
-        if (m.CarrierCarrierScattering === true)
-            retval.push("CarrierCarrierScattering");
-        else
-            retval.push(
-                `CarrierCarrierScattering(${m.CarrierCarrierScattering})`,
-            );
-    }
-    if (m.ConstantMobility !== undefined)
-        retval.push((m.ConstantMobility ? "+" : "-") + "ConstantMobility");
-    if (m.Diffusivity) retval.push();
-    if (m.Diffusivity)
-        retval.push(
-            "Diffusivity",
-            "(",
-            ...formatHighFieldSaturation(m.Diffusivity),
-            ")",
-        );
-    if (m.eDiffusivity)
-        retval.push(
-            "eDiffusivity",
-            "(",
-            ...formatHighFieldSaturation(m.eDiffusivity),
-            ")",
-        );
-    if (m.hDiffusivity)
-        retval.push(
-            "hDiffusivity",
-            "(",
-            ...formatHighFieldSaturation(m.hDiffusivity),
-            ")",
-        );
-    if (m.IncompleteIonization) retval.push("IncompleteIonization");
-    if (m.MultiValley) retval.push("MultiValley");
-    if (m.Tunneling !== undefined)
-        retval.push((m.Tunneling ? "+" : "-") + "Tunneling");
-    return retval;
-};
+const formatMobility = (m: Mobility) =>
+    SDeviceFormat(m)({
+        flag: ["IncompleteIonization", "MultiValley"],
+        switch: ["ConstantMobility", "Tunneling"],
+        block: {
+            DopingDependence: formatDopingDependence,
+            HighFieldSaturation: formatHighFieldSaturation,
+            eHighFieldSaturation: formatHighFieldSaturation,
+            hHighFieldSaturation: formatHighFieldSaturation,
+            Enormal: formatEnormal,
+            ToCurrentEnormal: formatEnormal,
+            PhuMob: (v) => (v === true ? [] : [v]),
+            CarrierCarrierScattering: (v) => (v === true ? [] : [v]),
+            Diffusivity: formatHighFieldSaturation,
+            eDiffusivity: formatHighFieldSaturation,
+            hDiffusivity: formatHighFieldSaturation,
+        },
+    });
 
 type DopingDependence = {
     Arora?: true;
@@ -114,15 +51,13 @@ type DopingDependence = {
     UniBo?: true;
 };
 
-const formatDopingDependence = (raw: DopingDependence) => {
-    const { BalMob, ...others } = raw;
-    let retval = Object.keys(others);
-    if (BalMob) {
-        if (BalMob === true) retval.push("BalMob");
-        else retval.push(`BalMob(Lch=${BalMob.Lch})`);
-    }
-    return retval;
-};
+const formatDopingDependence = (raw: DopingDependence) =>
+    SDeviceFormat(raw)({
+        flag: ["Arora", "Masetti", "PhuMob", "PhuMob2", "UniBo"],
+        block: {
+            BalMob: (v) => (v === true ? [] : [`Lch=${v.Lch}`]),
+        },
+    });
 
 type HighFieldSaturation = {
     DrivingForce?:
@@ -144,12 +79,13 @@ type HighFieldSaturation = {
         | "VRHMob";
 };
 
-const formatHighFieldSaturation = (raw: HighFieldSaturation) => {
-    const ret: string[] = [];
-    if (raw.DrivingForce) ret.push(raw.DrivingForce);
-    if (raw.model) ret.push(raw.model);
-    return ret;
-};
+const formatHighFieldSaturation = (raw: HighFieldSaturation) =>
+    SDeviceFormat(raw)({
+        others: {
+            DrivingForce: (_, v) => [v],
+            model: (_, v) => [v],
+        },
+    });
 
 type EnormalIALMob = {
     AutoOrientation?: boolean;
@@ -159,31 +95,23 @@ type EnormalIALMob = {
     PhononCombination?: 0 | 1 | 2;
 };
 
-const formatEnormalIALMob = (raw: EnormalIALMob) => {
-    const ret: string[] = [];
-    const { ParameterSetName, PhononCombination, ...sw } = raw;
-    ret.push(...Object.entries(sw).map(([k, v]) => (v ? "+" : "-") + k));
-    if (ParameterSetName) ret.push(`ParameterSetName="${ParameterSetName}"`);
-    if (PhononCombination !== undefined)
-        ret.push(`PhononCombination=${PhononCombination}`);
-    return ret;
-};
+const formatEnormalIALMob = (raw: EnormalIALMob) =>
+    SDeviceFormat(raw)({
+        switch: ["AutoOrientation", "ClusteringEverywhere", "FullPhuMob"],
+        assignString: ["ParameterSetName"],
+        assign: ["PhononCombination"],
+    });
 
 type EnormalLombardi = {
     AutoOrientation?: boolean;
     ParameterSetName?: string;
 };
 
-const formatEnormalLombardi = (raw: EnormalLombardi) => {
-    const ret: string[] = [];
-    const { AutoOrientation, ParameterSetName } = raw;
-    const { formatSwitch } = useFormatUtils(ret);
-    formatSwitch(raw, "AutoOrientation");
-    if (AutoOrientation)
-        ret.push((AutoOrientation ? "+" : "-") + "AutoOrientation");
-    if (ParameterSetName) ret.push(`ParameterSetName="${ParameterSetName}"`);
-    return ret;
-};
+const formatEnormalLombardi = (raw: EnormalLombardi) =>
+    SDeviceFormat(raw)({
+        switch: ["AutoOrientation"],
+        assignString: ["ParameterSetName"],
+    });
 
 type Enormal = {
     Coulomb2D?: true;
@@ -198,16 +126,23 @@ type Enormal = {
     UniBo?: true;
 };
 
-const formatEnormal = (raw: Enormal) => {
-    const { IALMob, Lombardi, ...flags } = raw;
-
-    const retval = Object.keys(flags);
-    if (IALMob)
-        retval.push(`IALMob( ${formatEnormalIALMob(IALMob).join(" ")} )`);
-    if (Lombardi)
-        retval.push(`Lombardi( ${formatEnormalLombardi(Lombardi).join(" ")} )`);
-    return retval;
-};
+const formatEnormal = (raw: Enormal) =>
+    SDeviceFormat(raw)({
+        flag: [
+            "Coulomb2D",
+            "InterfaceCharge",
+            "Lombardi_highk",
+            "NegInterfaceCharge",
+            "PosInterfaceCharge",
+            "RCS",
+            "RPS",
+            "UniBo",
+        ],
+        block: {
+            IALMob: formatEnormalIALMob,
+            Lombardi: formatEnormalLombardi,
+        },
+    });
 
 export { formatMobility };
 export type { Mobility };
