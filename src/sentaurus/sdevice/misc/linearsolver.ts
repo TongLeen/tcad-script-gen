@@ -42,13 +42,15 @@ type Method =
           solver: "Blocked";
           sub: LinearSolver;
       };
-const formatMethod = (ctx: string[], m: Method) => {
+const formatMethod = (m: Method) => {
+    const retval: string[] = [];
     if (m !== undefined) {
         if (typeof m === "object" && m.solver === "Blocked") {
-            ctx.push("Method=Blocked");
-            ctx.push("SubMethod", "=", ...formatLinearSolver(m.sub));
-        } else ctx.push("Method", "=", ...formatLinearSolver(m));
+            retval.push("Method=Blocked");
+            retval.push("SubMethod", "=", ...formatLinearSolver(m.sub));
+        } else retval.push("Method", "=", ...formatLinearSolver(m));
     }
+    return retval;
 };
 export { formatLinearSolver, formatMethod };
 export type { LinearSolver, Method };
