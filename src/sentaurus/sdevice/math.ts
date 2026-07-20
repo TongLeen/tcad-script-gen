@@ -129,7 +129,7 @@ type EndPoint<M extends string> = {
 const formatNonlocal = <M extends string>(n: Nonlocal<M>) =>
     SDeviceFormat(n)({
         assign: ["Digits", "Length", "EnergyResolution", "MaxAngle"],
-        assignString: ["Electrode" as any],
+        assignString: ["Electrode"],
         others: {
             RegionInterface: (_, v) => [`RegionInterface="${v[0]}/${v[1]}"`],
             MaterialInterface: (_, v) => [

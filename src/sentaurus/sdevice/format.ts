@@ -1,8 +1,10 @@
+type AllKeys<T> = T extends any ? keyof T : never;
+
 type FormatBatch<T extends Record<string, unknown>> = {
-    flag?: (keyof T)[];
-    switch?: (keyof T)[];
-    assign?: (keyof T)[];
-    assignString?: (keyof T)[];
+    flag?: AllKeys<T>[];
+    switch?: AllKeys<T>[];
+    assign?: AllKeys<T>[];
+    assignString?: AllKeys<T>[];
     block?: { [K in keyof T]?: (v: NonNullable<T[K]>) => string[] };
     others?: { [K in keyof T]?: (k: K, v: NonNullable<T[K]>) => string[] };
 };
