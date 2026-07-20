@@ -1,4 +1,4 @@
-import useFormatUtils from "../format-utils";
+import SDeviceFormat from "../format";
 
 type Recombination = {
     Avalanche?: Avalanche;
@@ -17,30 +17,23 @@ type Recombination = {
     Band2Band?: Band2Band;
 };
 
-const formatRecombination = (rec: Recombination) => {
-    let retval: string[] = [];
-    const { formatFlag, formatSwitch, formatBlock, formatAssignment } =
-        useFormatUtils(retval);
-    formatFlag(rec, "SurfaceSRC");
-    formatFlag(rec, "TrapAssistedAuger");
-    formatFlag(rec, "intrinsicRicher");
-    formatBlock(rec, "Avalanche", formatAvalanche);
-    formatBlock(rec, "eAvalanche", formatAvalanche);
-    formatBlock(rec, "hAvalanche", formatAvalanche);
-    formatBlock(rec, "Auger", (e) => {
-        return e === true ? [] : [e];
+const formatRecombination = (rec: Recombination) =>
+    SDeviceFormat(rec)({
+        flag: ["SurfaceSRC", "TrapAssistedAuger", "intrinsicRicher"],
+        switch: ["Radiative"],
+        block: {
+            Avalanche: formatAvalanche,
+            eAvalanche: formatAvalanche,
+            hAvalanche: formatAvalanche,
+            Auger: (e) => (e === true ? [] : [e]),
+            SRH: formatSRH,
+            CDL: formatSRH,
+            Band2Band: formatBand2Band,
+        },
+        others: {
+            ConstantCarrierGeneration: (k, v) => [`${k}(value=${v})`],
+        },
     });
-    formatSwitch(rec, "Radiative");
-    formatBlock(rec, "SRH", formatSRH);
-    formatBlock(rec, "CDL", formatSRH);
-    formatBlock(rec, "Band2Band", formatBand2Band);
-    formatAssignment(
-        rec,
-        "ConstantCarrierGeneration",
-        (k, v) => `${k}(value=${v})`,
-    );
-    return retval;
-};
 
 type Avalanche = {
     BandgapDependence?: true;
@@ -79,23 +72,16 @@ type Band2Band = {
     ParameterSetName?: string[];
 };
 
-const formatBand2Band = (raw: Band2Band) => {
-    const { DensityCorrection, Model, ParameterSetName } = raw;
-
-    const ret: string[] = [];
-    const { formatSwitch } = useFormatUtils(ret);
-    formatSwitch(raw, "FranzDispersion");
-    formatSwitch(raw, "InterfaceReflection");
-    if (DensityCorrection) ret.push(`DensityCorrection=${DensityCorrection}`);
-    if (Model) ret.push(`Model=${Model}`);
-    if (ParameterSetName)
-        ret.push(
-            `ParameterSetName=( ${ParameterSetName.map((v) => `"${v}"`).join(
-                " ",
-            )} )`,
-        );
-    return ret;
-};
+const formatBand2Band = (raw: Band2Band) =>
+    SDeviceFormat(raw)({
+        switch: ["FranzDispersion", "InterfaceReflection"],
+        assign: ["DensityCorrection", "Model"],
+        others: {
+            ParameterSetName: (k, v) => [
+                `ParameterSetName=( ${v.map((v) => `"${v}"`).join(" ")} )`,
+            ],
+        },
+    });
 
 type SRH = {
     DopingDependence?: true;
@@ -112,29 +98,21 @@ type SRH = {
     TempDependence?: true;
 };
 
-const formatSRH = (raw: SRH) => {
-    const retval: string[] = [];
-    const { formatFlag, formatBlock } = useFormatUtils(retval);
-    formatFlag(raw, "DopingDependence");
-    formatFlag(raw, "ExpTempDependence");
-    formatFlag(raw, "TempDependence");
-    formatBlock(raw, "ElectricField", (e) => {
-        const l: string[] = [];
-        const { formatAssignment } = useFormatUtils(l);
-        formatAssignment(e, "DensityCorrection");
-        formatAssignment(e, "Lifetime");
-        return l;
+const formatSRH = (raw: SRH) =>
+    SDeviceFormat(raw)({
+        flag: ["DopingDependence", "ExpTempDependence", "TempDependence"],
+        block: {
+            ElectricField: (e) =>
+                SDeviceFormat(e)({
+                    assign: ["Lifetime", "DensityCorrection"],
+                }),
+            NonlocalPath: (e) =>
+                SDeviceFormat(e)({
+                    flag: ["Fermi", "TwoBand"],
+                    assign: ["Lifetime"],
+                }),
+        },
     });
-    formatBlock(raw, "NonlocalPath", (e) => {
-        const l: string[] = [];
-        const { formatAssignment } = useFormatUtils(l);
-        formatFlag(e, "Fermi");
-        formatFlag(e, "TwoBand");
-        formatAssignment(e, "Lifetime");
-        return l;
-    });
-    return retval;
-};
 
 export { formatRecombination };
 export type { Recombination };
