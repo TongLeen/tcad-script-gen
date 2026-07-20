@@ -11,7 +11,7 @@ import {
     type IncompleteIonization,
 } from "./misc";
 import { formatTrap, type Trap } from "./trap";
-import useFormatUtils from "../format-utils";
+import SDeviceFormat from "../format";
 
 type PhysicsType<M extends string, D extends string> = (
     | PhysicsConfigGlobal
@@ -68,28 +68,25 @@ type PhysicsConfigCommon<D extends string> = {
     LatticeTemperatureLimit?: number;
 };
 
-const formatCommon = <D extends string>(raw: PhysicsConfigCommon<D>) => {
-    let retval: string[] = [];
-    const { formatAssignment, formatBlock } = useFormatUtils(retval);
-    formatBlock(raw, "Recombination", formatRecombination);
-    formatBlock(raw, "Aniso", formatAniso);
-    formatBlock(raw, "IncompleteIonization", formatIncompleteIonization);
-    formatBlock(raw, "BreakdownProbability", (e) => {
-        let l: string[] = [];
-        const { formatAssignment, formatFlag } = useFormatUtils(l);
-        formatAssignment(e, "MinElectricField");
-        formatFlag(e, "InterpolatedDiscretization");
-        return l;
+const formatCommon = <D extends string>(raw: PhysicsConfigCommon<D>) =>
+    SDeviceFormat(raw)({
+        assign: ["LatticeTemperatureLimit"],
+        block: {
+            Recombination: formatRecombination,
+            Aniso: formatAniso,
+            IncompleteIonization: formatIncompleteIonization,
+            BreakdownProbability: (e) =>
+                SDeviceFormat(e)({
+                    flag: ["InterpolatedDiscretization"],
+                    assign: ["MinElectricField"],
+                }),
+            Piezoelectric_Polarization: (e) =>
+                SDeviceFormat(e)({
+                    assign: ["activation"],
+                    others: { force: (_, v) => [v] },
+                }),
+        },
     });
-    formatBlock(raw, "Piezoelectric_Polarization", (e) => {
-        let l: string[] = [e.force];
-        const { formatAssignment } = useFormatUtils(l);
-        formatAssignment(e, "activation");
-        return l;
-    });
-    formatAssignment(raw, "LatticeTemperatureLimit");
-    return retval;
-};
 
 type PhysicsConfigGlobal = {
     kind: "Global";
@@ -109,43 +106,40 @@ type PhysicsConfigGlobal = {
     FermiForTEPAnalytic?: true;
 };
 
-const formatGlobal = (raw: PhysicsConfigGlobal) => {
-    let retval: string[] = [];
-    const { formatFlag, formatAssignment, formatBlock } =
-        useFormatUtils(retval);
-    formatFlag(raw, "DefaultParametersFromFile");
-    formatFlag(raw, "FermiForTEPAnalytic");
-    formatAssignment(raw, "AreaFactor");
-    formatAssignment(raw, "Temperature");
-    formatBlock(raw, "Thermodynamic", (e) => (e === true ? [] : [e]));
-    formatBlock(raw, "PostTemperature", (e) => {
-        if (e === true) return [];
-        const { IV_diss } = e;
-        if (IV_diss === true) return ["IV_diss"];
-        else return [`IV_diss(${IV_diss})`];
+const formatGlobal = (raw: PhysicsConfigGlobal) =>
+    SDeviceFormat(raw)({
+        flag: ["DefaultParametersFromFile", "FermiForTEPAnalytic"],
+        assign: ["AreaFactor", "Temperature"],
+        block: {
+            Fermi: (e) => (e === true ? [] : [e]),
+            Thermodynamic: (e) => (e === true ? [] : [e]),
+            PostTemperature: (e) => {
+                if (e === true) return [];
+                const { IV_diss } = e;
+                if (IV_diss === true) return ["IV_diss"];
+                else return [`IV_diss(${IV_diss})`];
+            },
+            Hydrodynamic: (e) => (e === true ? [] : [e]),
+        },
+        others: {
+            eBarrierTunneling: (k, v) => {
+                const r: string[] = [];
+                Object.entries(v).forEach(([name, ebt]) => {
+                    r.push(k, `"${name}"`);
+                    if (ebt) r.push("(", ...formatBarrierTunneling(ebt), ")");
+                });
+                return r;
+            },
+            hBarrierTunneling: (k, v) => {
+                const r: string[] = [];
+                Object.entries(v).forEach(([name, ebt]) => {
+                    r.push(k, `"${name}"`);
+                    if (ebt) r.push("(", ...formatBarrierTunneling(ebt), ")");
+                });
+                return r;
+            },
+        },
     });
-    formatBlock(raw, "Hydrodynamic", (e) => {
-        if (e === true) return [];
-        else return [e];
-    });
-
-    if (raw.eBarrierTunneling) {
-        Object.entries(raw.eBarrierTunneling).forEach(([name, ebt]) => {
-            retval.push("eBarrierTunneling", `"${name}"`);
-            if (ebt) retval.push("(", ...formatBarrierTunneling(ebt), ")");
-        });
-    }
-    if (raw.hBarrierTunneling) {
-        Object.entries(raw.hBarrierTunneling).forEach(([name, hbt]) => {
-            retval.push("hBarrierTunneling", `"${name}"`);
-            if (hbt) retval.push("(", ...formatBarrierTunneling(hbt), ")");
-        });
-    }
-    formatBlock(raw, "Fermi", (e) => {
-        return e === true ? [] : [e];
-    });
-    return retval;
-};
 
 type PhysicsConfigBulk<M extends string> = {
     EffectiveIntrinsicDensity?: EffectiveIntrinsicDensity;
@@ -164,31 +158,23 @@ type PhysicsConfigBulk<M extends string> = {
     TEPower?: "Analytic" | "Tabulated_Si";
 };
 
-const formatBulk = <M extends string>(raw: PhysicsConfigBulk<M>) => {
-    let retval: string[] = [];
-    const { formatFlag, formatAssignment, formatBlock } =
-        useFormatUtils(retval);
-    formatBlock(
-        raw,
-        "EffectiveIntrinsicDensity",
-        formatEffectiveIntrinsicDensity,
-    );
-    formatBlock(raw, "Mobility", formatMobility);
-    formatBlock(raw, "eMobility", formatMobility);
-    formatBlock(raw, "hMobility", formatMobility);
-    formatAssignment(raw, "eQuasiFermi");
-    formatAssignment(raw, "hQuasiFermi");
-    formatAssignment(raw, "HeatPreFactor");
-    formatBlock(raw, "Traps", (e) => {
-        return e
-            .map(formatTrap)
-            .map((v) => ["(", ...v, ")"])
-            .flat();
+const formatBulk = <M extends string>(raw: PhysicsConfigBulk<M>) =>
+    SDeviceFormat(raw)({
+        flag: ["GaussianDOS_full"],
+        assign: ["eQuasiFermi", "hQuasiFermi", "HeatPreFactor"],
+        block: {
+            EffectiveIntrinsicDensity: formatEffectiveIntrinsicDensity,
+            Mobility: formatMobility,
+            eMobility: formatMobility,
+            hMobility: formatMobility,
+            Traps: (e) =>
+                e
+                    .map(formatTrap)
+                    .map((v) => ["(", ...v, ")"])
+                    .flat(),
+            TEPower: (e) => [e],
+        },
     });
-    formatFlag(raw, "GaussianDOS_full");
-    formatBlock(raw, "TEPower", (e) => [e]);
-    return retval;
-};
 
 type PhysicsConfigInterface<M extends string> = {
     Dipole?: true;
@@ -210,30 +196,25 @@ type PhysicsConfigInterface<M extends string> = {
 };
 type DistResist = number | "SchottkyResist";
 
-const formatInterface = <M extends string>(raw: PhysicsConfigInterface<M>) => {
-    const retval: string[] = [];
-    const { formatFlag, formatBlock, formatAssignment } =
-        useFormatUtils(retval);
-    formatFlag(raw, "Dipole");
-    formatAssignment(raw, "DistResist");
-    formatAssignment(raw, "MSDistResist");
-    formatBlock(raw, "Traps", (e) => {
-        return e
-            .map(formatTrap)
-            .map((v) => ["(", ...v, ")"])
-            .flat();
+const formatInterface = <M extends string>(raw: PhysicsConfigInterface<M>) =>
+    SDeviceFormat(raw)({
+        flag: ["Dipole", "HeteroInterface", "Schottky", "Schroedinger"],
+        assign: [
+            "DistResist",
+            "MSDistResist",
+            "eRecVelocity",
+            "hRecVelocity",
+            "TATNonlocalPathNC",
+        ],
+        block: {
+            Traps: (e) =>
+                e
+                    .map(formatTrap)
+                    .map((v) => ["(", ...v, ")"])
+                    .flat(),
+            Thermionic: (e) => (e === true ? [] : [e]),
+        },
     });
-    formatAssignment(raw, "eRecVelocity");
-    formatAssignment(raw, "hRecVelocity");
-    formatFlag(raw, "HeteroInterface");
-    formatFlag(raw, "Schottky");
-    formatFlag(raw, "Schroedinger");
-    formatAssignment(raw, "TATNonlocalPathNC");
-    formatBlock(raw, "Thermionic", (e) => {
-        return e === true ? [] : [e];
-    });
-    return retval;
-};
 
 const physicsGenerator = <M extends string, D extends string>(
     ctx: string[],
