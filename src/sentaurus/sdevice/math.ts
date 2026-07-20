@@ -1,4 +1,4 @@
-import useFormatUtils from "./format-utils";
+import SDeviceFormat from "./format";
 import { formatMethod, type Method } from "./misc/linearsolver";
 
 type MathType = ConvergenceControl & ComputationControl & ValueControl;
@@ -13,22 +13,19 @@ type ConvergenceControl = {
     CheckBehavior?: "CheckRhsAfterUpdate" | "RhsAndUpdateConvergence";
 };
 
-const formatConvergenceControl = (raw: ConvergenceControl) => {
-    const retval: string[] = [];
-    const { formatAssignment } = useFormatUtils(retval);
-    formatAssignment(raw, "RHSMin");
-    formatAssignment(raw, "RHSMinFactor");
-    formatAssignment(raw, "Digits");
-    formatAssignment(raw, "RHSFactor");
-    formatAssignment(raw, "RHSMax");
-    if (raw.CheckBehavior) retval.push(raw.CheckBehavior);
-    if (raw.ErrRef) {
-        const r = raw.ErrRef;
-        if (r.Electron) retval.push(`ErrRef(Electron)=${r.Electron}`);
-        if (r.Hole) retval.push(`ErrRef(Hole)=${r.Hole}`);
-    }
-    return retval;
-};
+const formatConvergenceControl = (raw: ConvergenceControl) =>
+    SDeviceFormat(raw)({
+        assign: ["RHSMin", "RHSMinFactor", "RHSMax", "RHSFactor", "Digits"],
+        others: {
+            CheckBehavior: (k, v) => [v],
+            ErrRef: (_, v) => {
+                const r: string[] = [];
+                if (v.Electron) r.push(`ErrRef(Electron)=${v.Electron}`);
+                if (v.Hole) r.push(`ErrRef(Hole)=${v.Hole}`);
+                return r;
+            },
+        },
+    });
 
 type ErrRef = {
     Electron?: number;
@@ -44,44 +41,40 @@ type ComputationControl = {
     Method?: Method;
 };
 
-const formatComputationControl = (raw: ComputationControl) => {
-    const retval: string[] = [];
-    const { formatFlag, formatAssignment, formatBlock } =
-        useFormatUtils(retval);
-    formatFlag(raw, "ExitOnFailure");
-    formatAssignment(raw, "Transient");
-    formatAssignment(raw, "Iterations");
-    formatBlock(raw, "Extrapolate", (e) => {
-        if (e === true) return [];
-        const l: string[] = [];
-        const { formatFlag, formatAssignment, formatBlock } = useFormatUtils(l);
-        formatAssignment(e, "Algorithm");
-        formatAssignment(e, "LowDensityLimit");
-        formatAssignment(e, "MinStep");
-        formatAssignment(e, "NumberOfFailures");
-        formatAssignment(e, "Order");
-        return l;
+const formatComputationControl = (raw: ComputationControl) =>
+    SDeviceFormat(raw)({
+        flag: ["ExitOnFailure"],
+        assign: ["Transient", "Iterations"],
+        block: {
+            Extrapolate: (v) => {
+                if (v === true) return [];
+                else
+                    return SDeviceFormat(v)({
+                        assign: [
+                            "Algorithm",
+                            "LowDensityLimit",
+                            "MinStep",
+                            "NumberOfFailures",
+                            "Order",
+                        ],
+                    });
+            },
+        },
+        others: {
+            Method: (k, v) => formatMethod(v),
+            Threads: (k, v) => {
+                const retval: string[] = [];
+                if (typeof v === "number")
+                    retval.push(`NumberOfThreads=${raw.Threads}`);
+                else
+                    retval.push(
+                        `NumberOfAssemblyThreads=${v.Assembly}`,
+                        `NumberOfSolverThreads=${v.Solver}`,
+                    );
+                return retval;
+            },
+        },
     });
-    if (raw.Threads !== undefined) {
-        if (typeof raw.Threads === "number")
-            retval.push(`NumberOfThreads=${raw.Threads}`);
-        else
-            retval.push(
-                `NumberOfAssemblyThreads=${raw.Threads.Assembly}`,
-                `NumberOfSolverThreads=${raw.Threads.Solver}`,
-            );
-    }
-    if (raw.Method !== undefined) formatMethod(retval, raw.Method);
-    // if (raw.Method !== undefined) {
-    //     const M = raw.Method
-    //     if (typeof M === 'object' && M.solver === 'Blocked') {
-    //         retval.push("Method=Blocked")
-    //         retval.push("SubMethod", "=", ...formatLinearSolver(M.sub))
-    //     }
-    //     else retval.push("Method", "=", ...formatLinearSolver(M))
-    // }
-    return retval;
-};
 
 type Extrapolate = {
     Algorithm?: 1 | 2;
@@ -100,20 +93,27 @@ type ValueControl = {
     RefDens_eGradQuasiFermi_ElectricField?: number;
 };
 
-const formatValueControl = (raw: ValueControl) => {
-    const retval: string[] = [];
-    const { formatFlag, formatBlock, formatSwitch, formatAssignment } =
-        useFormatUtils(retval);
-    formatFlag(raw, "DirectCurrentComputation");
-    formatBlock(raw, "ExtendedPrecision", (e) => (e === true ? [] : [`${e}`]));
-    formatSwitch(raw, "AvalDerivatives");
-    formatSwitch(raw, "Derivatives");
-    formatAssignment(raw, "RefDens_eGradQuasiFermi_ElectricField");
-    return retval;
-};
+const formatValueControl = (raw: ValueControl) =>
+    SDeviceFormat(raw)({
+        flag: ["DirectCurrentComputation"],
+        switch: ["AvalDerivatives", "Derivatives"],
+        assign: ["RefDens_eGradQuasiFermi_ElectricField"],
+        block: {
+            ExtendedPrecision: (e) => (e === true ? [] : [`${e}`]),
+        },
+    });
 
-type Nonlocal<M extends string> = {
-    Electrode: string;
+type Location<M extends string> =
+    | ({ Region: string } & { Material?: never })
+    | ({ Material: M } & { Region?: never });
+
+type NonlocalPosition<M extends string> =
+    | { kind: "Barrier"; location: Location<M> }
+    | { kind: "Electrode"; Electrode: string }
+    | { kind: "RegionInterface"; RegionInterface: [string, string] }
+    | { kind: "MaterialInterface"; MaterialInterface: [M, M] };
+
+type Nonlocal<M extends string> = NonlocalPosition<M> & {
     Digits: number;
     Length: number;
     EnergyResolution: number;
@@ -123,25 +123,40 @@ type Nonlocal<M extends string> = {
 };
 type EndPoint<M extends string> = {
     enable: boolean;
-    material: M;
+    location: Location<M>;
 };
 
-const formatNonlocal = <M extends string>(n: Nonlocal<M>) => {
-    const retval: string[] = [];
-    const { formatAssignment } = useFormatUtils(retval);
-    formatAssignment(n, "Digits");
-    formatAssignment(n, "Electrode", (k, v) => `${k}="${v}"`);
-    formatAssignment(n, "Length");
-    formatAssignment(n, "EnergyResolution");
-    formatAssignment(n, "MaxAngle");
-    retval.push(`Direction=(${n.Direction.join(" ")})`);
-    if (n.EndPoints) {
-        n.EndPoints.map(
-            (e) => `${e.enable ? "+" : "-"}EndPoint(Material="${e.material}")`,
-        );
-    }
-    return retval;
-};
+const formatNonlocal = <M extends string>(n: Nonlocal<M>) =>
+    SDeviceFormat(n)({
+        assign: ["Digits", "Length", "EnergyResolution", "MaxAngle"],
+        assignString: ["Electrode" as any],
+        others: {
+            RegionInterface: (_, v) => [`RegionInterface="${v[0]}/${v[1]}"`],
+            MaterialInterface: (_, v) => [
+                `MaterialInterface="${v[0]}/${v[1]}"`,
+            ],
+            Direction: (_, v) => [`Direction=(${v.join(" ")})`],
+            EndPoints: (_, v) => {
+                const ll = v.map((v) => [
+                    `${v.enable ? "+" : "-"}EndPoint`,
+                    "(",
+                    v.location.Material !== undefined
+                        ? `Material="${v.location.Material}"`
+                        : `Region="${v.location.Region}"`,
+                    ")",
+                ]);
+                return ll.flat();
+            },
+            location: (_, v) => [
+                "Barrier",
+                "(",
+                v.Material !== undefined
+                    ? `Material="${v.Material}"`
+                    : `Region="${v.Region}"`,
+                ")",
+            ],
+        },
+    });
 
 const mathGenerator = <M extends string>(ctx: string[]) => {
     const math = (m: MathType, nonlocalmesh?: Record<string, Nonlocal<M>>) => {
