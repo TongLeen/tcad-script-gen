@@ -1,4 +1,4 @@
-import { argv } from "bun";
+import SDeviceFormat from "./format";
 
 type FileType = {
     Grid?: string;
@@ -6,11 +6,28 @@ type FileType = {
     Output?: string;
     Plot?: string;
     Current?: string;
+    NonLocalPlot?: string;
+    NewtonPlot?: string;
 };
+
 const fileGenerator = (ctx: string[]) => {
     const file = (args: FileType) => {
-        const args_pair = Object.entries(args).map(([k, v]) => `${k}="${v}"`);
-        ctx.push("File", "{", ...args_pair, "}");
+        ctx.push(
+            "File",
+            "{",
+            ...SDeviceFormat(args)({
+                assignString: [
+                    "Current",
+                    "Grid",
+                    "Output",
+                    "Parameter",
+                    "Plot",
+                    "NonLocalPlot",
+                    "NewtonPlot",
+                ],
+            }),
+            "}",
+        );
     };
     return file;
 };
