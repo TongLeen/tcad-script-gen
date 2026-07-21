@@ -1,5 +1,5 @@
-import SDeviceFormat from "./format";
-import { formatMethod, type Method } from "./misc/linearsolver";
+import SDeviceFormat from "../utils/format";
+import { formatMethod, type Method } from "../misc/linearsolver";
 
 type MathType = ConvergenceControl & ComputationControl & ValueControl;
 

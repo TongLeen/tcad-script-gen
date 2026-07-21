@@ -11,11 +11,13 @@ import {
     formatGoal,
 } from "./control";
 
-type QuasistationaryType = StepType & {
-    goal: DeviceGoalType | DeviceGoalType[];
+type RampControl = {
+    goal?: DeviceGoalType | DeviceGoalType[];
     plot?: PlotType;
     equation: SingleType;
 };
+
+type QuasistationaryType = StepType & RampControl;
 
 type TransientType = TransientTime &
     StepType & {

@@ -1,5 +1,3 @@
-type PlotType = (Scalar | Vector)[];
-
 type Scalar =
     | "eQuasiFermi"
     | "hQuasiFermi"
@@ -43,11 +41,4 @@ type Vector =
     | "TotalCurrent/Vector"
     | "PE_Polarization/Vector";
 
-const plotGenerator = (ctx: string[]) => {
-    return (p: PlotType) => {
-        ctx.push("Plot", "{", ...p, "}");
-    };
-};
-
-export { plotGenerator };
-export type { PlotType };
+export type PlotVariable = Scalar | Vector;

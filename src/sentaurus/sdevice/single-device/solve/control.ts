@@ -1,5 +1,8 @@
 import useFormatUtils from "../format-utils";
 import { type Equation } from "./common/Equation";
+import { formatSingle, type SingleType } from "./commands/Compute";
+import { formatPlot, type PlotType } from "./commands/Plot";
+import SDeviceFormat from "../format";
 
 type StepType = {
     MinStep: number;
@@ -59,7 +62,34 @@ const formatGoal = (e: DeviceGoalType) => {
     return retval;
 };
 
-type BreakCriteria = {};
+type ContactBreakCriteria<T extends "MixedMode" = never> = {
+    contact: string;
+    DevName: T extends "MixedMode" ? string : never;
+    Node: T extends "MixedMode" ? string : never;
+    absval?: number;
+    minval?: number;
+    maxval?: number;
+};
+type BulkBreakCriteria<T extends "MixedMode" = never> = {
+    DevName: T extends "MixedMode" ? string : never;
+    maxval?: number;
+};
+type PowerBreakCriteria<T extends "MixedMode" = never> = {
+    DevName: T extends "MixedMode" ? string : never;
+    absval?: number;
+    minval?: number;
+    maxval?: number;
+};
+
+type BreakCriteria<T extends "MixedMode" = never> = {
+    Voltage?: ContactBreakCriteria<T>;
+    Current?: ContactBreakCriteria<T>;
+    CurrentDensity?: BulkBreakCriteria<T>;
+    ElectricField?: BulkBreakCriteria<T>;
+    LatticeTemperature?: BulkBreakCriteria<T>;
+    OuterDevicePower?: PowerBreakCriteria<T>;
+    InnerDevicePower?: PowerBreakCriteria<T>;
+};
 
 type TransientTime = {
     CheckTransientError?: true;
@@ -69,6 +99,13 @@ type TransientTime = {
     TransientErrRef?: Record<Equation, number>;
     TrStepRejectionFactor?: number;
 };
+
+type RampControl = {
+    goal?: DeviceGoalType | DeviceGoalType[];
+    plot?: PlotType;
+    equation: SingleType;
+};
+
 type AcceptNewtonParameter = never;
 
 export type {
