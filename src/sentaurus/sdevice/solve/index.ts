@@ -13,7 +13,7 @@ import {
 
 type QuasistationaryType = StepType & {
     goal: DeviceGoalType | DeviceGoalType[];
-    plot: PlotType;
+    plot?: PlotType;
     equation: SingleType;
 };
 
@@ -26,8 +26,8 @@ type TransientType = TransientTime &
         AcceptNewtonParameter?: AcceptNewtonParameter;
         BreakCriteria?: BreakCriteria;
         goal: DeviceGoalType | DeviceGoalType[];
-        plot: PlotType;
         equation: SingleType;
+        plot?: PlotType;
     };
 
 const solveGenerator = () => {
@@ -52,7 +52,9 @@ const solveGenerator = () => {
             ")",
             "{",
             ...formatSingle(e.equation),
-            ...["Plot", "(", ...formatPlot(e.plot), ")"],
+            ...(e.plot === undefined
+                ? []
+                : ["Plot", "(", ...formatPlot(e.plot), ")"]),
             "}",
         );
     };
@@ -75,7 +77,9 @@ const solveGenerator = () => {
             ")",
             "{",
             ...formatSingle(e.equation),
-            ...["Plot", "(", ...formatPlot(e.plot), ")"],
+            ...(e.plot === undefined
+                ? []
+                : ["Plot", "(", ...formatPlot(e.plot), ")"]),
             "}",
         );
     };
