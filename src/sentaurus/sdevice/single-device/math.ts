@@ -1,7 +1,22 @@
 import SDeviceFormat from "../utils/format";
 import { formatMethod, type Method } from "../misc/linearsolver";
 
-type MathType = ConvergenceControl & ComputationControl & ValueControl;
+import {
+    type BreakCriteria,
+    formatBreakCriteria,
+} from "./solve/control/breakcriteria";
+
+type MathType<M extends string> =
+    | ({ kind: "Global" } & ConvergenceControl &
+          ComputationControl &
+          ValueControl &
+          BreakCriteriaPart)
+    | ({ kind: "Region"; region: string } & BreakCriteriaPart)
+    | ({ kind: "Material"; material: M } & BreakCriteriaPart);
+
+type BreakCriteriaPart = {
+    BreakCriteria?: BreakCriteria | BreakCriteria[];
+};
 
 type ConvergenceControl = {
     RHSMin?: number;
@@ -159,19 +174,46 @@ const formatNonlocal = <M extends string>(n: Nonlocal<M>) =>
     });
 
 const mathGenerator = <M extends string>(ctx: string[]) => {
-    const math = (m: MathType, nonlocalmesh?: Record<string, Nonlocal<M>>) => {
+    const math = (
+        m: MathType<M>,
+        nonlocalmesh?: Record<string, Nonlocal<M>>,
+    ) => {
         const ll: string[][] = [];
-        ll.push(
-            formatConvergenceControl(m),
-            formatComputationControl(m),
-            formatValueControl(m),
-        );
+        if (m.kind === "Global") {
+            ll.push(
+                formatConvergenceControl(m),
+                formatComputationControl(m),
+                formatValueControl(m),
+            );
+        }
+        if (m.BreakCriteria) {
+            const a = Array.isArray(m.BreakCriteria)
+                ? m.BreakCriteria
+                : [m.BreakCriteria];
+            ll.push(
+                ...a
+                    .map(formatBreakCriteria)
+                    .map((v) => ["BreakCriteria", "{", ...v, "}"]),
+            );
+        }
         if (nonlocalmesh) {
             Object.entries(nonlocalmesh).forEach(([k, v]) => {
                 ll.push(["NonLocal", `"${k}"`, "(", ...formatNonlocal(v), ")"]);
             });
         }
-        ctx.push("Math", "{", ...ll.flat(), "}");
+        if (m.kind === "Global") {
+            ctx.push("Math", "{", ...ll.flat(), "}");
+        } else if (m.kind === "Region") {
+            ctx.push("Math", `(Region="${m.region}")`, "{", ...ll.flat(), "}");
+        } else if (m.kind === "Material") {
+            ctx.push(
+                "Math",
+                `(Material="${m.material}")`,
+                "{",
+                ...ll.flat(),
+                "}",
+            );
+        }
     };
     return math;
 };
