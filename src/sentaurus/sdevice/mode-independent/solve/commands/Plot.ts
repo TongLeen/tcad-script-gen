@@ -1,4 +1,4 @@
-import useFormatUtils from "../../format-utils";
+import useFormatUtils from "../../../utils/format-utils";
 
 type PlotTime = (
     | number

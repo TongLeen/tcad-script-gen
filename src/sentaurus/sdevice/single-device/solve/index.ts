@@ -1,90 +1,30 @@
-import useFormatUtils from "../format-utils";
-import { formatSingle, type SingleType } from "./commands/Compute";
-import { formatPlot, type PlotType } from "./commands/Plot";
 import {
-    type DeviceGoalType,
-    type StepType,
-    type AcceptNewtonParameter,
-    type BreakCriteria,
-    type TransientTime,
-    formatStep,
-    formatGoal,
-} from "./control";
+    type Computation,
+    formatComputation,
+} from "../../mode-independent/solve/commands/Computation";
+import {
+    type PlotType,
+    formatPlot,
+} from "../../mode-independent/solve/commands/Plot";
 
-type RampControl = {
-    goal?: DeviceGoalType | DeviceGoalType[];
-    plot?: PlotType;
-    equation: SingleType;
-};
-
-type QuasistationaryType = StepType & RampControl;
-
-type TransientType = TransientTime &
-    StepType & {
-        Transient?: "BE" | "TRBDF";
-        InitialTime?: number;
-        FinalTime?: number;
-    } & {
-        AcceptNewtonParameter?: AcceptNewtonParameter;
-        BreakCriteria?: BreakCriteria;
-        goal: DeviceGoalType | DeviceGoalType[];
-        equation: SingleType;
-        plot?: PlotType;
-    };
+import { type TransientType, formatTransient } from "./transient";
+import {
+    type QuasistationaryType,
+    formatQuasistationary,
+} from "./quasistationary";
 
 const solveGenerator = () => {
     const buffer: string[] = [];
 
-    const single = (e: SingleType) => {
-        buffer.push(...formatSingle(e));
+    const single = (e: Computation) => {
+        buffer.push(...formatComputation(e));
     };
 
-    const quasistationary = (e: QuasistationaryType) => {
-        const params: string[] = [];
-        params.push(...formatStep(e));
-        if (Array.isArray(e.goal)) {
-            params.push(...e.goal.map(formatGoal).flat());
-        } else {
-            params.push(...formatGoal(e.goal));
-        }
-        buffer.push(
-            "Quasistationary",
-            "(",
-            ...params,
-            ")",
-            "{",
-            ...formatSingle(e.equation),
-            ...(e.plot === undefined
-                ? []
-                : ["Plot", "(", ...formatPlot(e.plot), ")"]),
-            "}",
-        );
-    };
-    const transient = (e: TransientType) => {
-        const params: string[] = [];
-        const { formatAssignment } = useFormatUtils(params);
-        params.push(...formatStep(e));
-        if (Array.isArray(e.goal)) {
-            params.push(...e.goal.map(formatGoal).flat());
-        } else {
-            params.push(...formatGoal(e.goal));
-        }
-        formatAssignment(e, "Transient");
-        formatAssignment(e, "InitialTime");
-        formatAssignment(e, "FinalTime");
-        buffer.push(
-            "Transient",
-            "(",
-            ...params,
-            ")",
-            "{",
-            ...formatSingle(e.equation),
-            ...(e.plot === undefined
-                ? []
-                : ["Plot", "(", ...formatPlot(e.plot), ")"]),
-            "}",
-        );
-    };
+    const quasistationary = <M extends string>(e: QuasistationaryType<M>) =>
+        buffer.push(...formatQuasistationary(e));
+
+    const transient = (e: TransientType) => buffer.push(...formatTransient(e));
+
     const newCurrentPrefix = (prefix: string) => {
         buffer.push(`NewCurrentPrefix="${prefix}"`);
     };

@@ -1,6 +1,7 @@
-import { formatMethod, type Method } from "../../misc/linearsolver";
-import useFormatUtils from "../../format-utils";
-import type { Equation } from "../common/Equation";
+import { formatMethod, type Method } from "../../../misc/linearsolver";
+import type { Equation } from "../../../definations";
+
+import SDeviceFormat from "../../../utils/format";
 
 type CoupledType = {
     kind: "Coupled";
@@ -17,27 +18,32 @@ type CoupledType = {
     UpdateIncrease?: number;
     UpdateMax?: number;
 };
+
 const formatCoupled = (e: CoupledType) => {
-    const params: string[] = [];
-    const { formatAssignment, formatBlock } = useFormatUtils(params);
-    if (e.CheckBehavior) params.push(e.CheckBehavior);
-    formatAssignment(e, "Digits");
-    formatAssignment(e, "Iterations");
-    formatAssignment(e, "LineSearchDamping");
-    formatAssignment(e, "NotDamped");
-    formatAssignment(e, "RHSMin");
-    formatAssignment(e, "RHSMinFactor");
-    formatAssignment(e, "UpdateIncrease");
-    formatAssignment(e, "UpdateMax");
-    formatBlock(e, "IncompleteNewton", (k) => {
-        if (k === true) return [];
-        const l: string[] = [];
-        const { formatAssignment } = useFormatUtils(l);
-        formatAssignment(k, "RHSFactor");
-        formatAssignment(k, "UpdateFactor");
-        return l;
+    const params = SDeviceFormat(e)({
+        assign: [
+            "Digits",
+            "Iterations",
+            "LineSearchDamping",
+            "NotDamped",
+            "RHSMin",
+            "RHSMinFactor",
+            "UpdateIncrease",
+            "UpdateMax",
+        ],
+        block: {
+            IncompleteNewton: (k) => {
+                if (k === true) return [];
+                return SDeviceFormat(k)({
+                    assign: ["RHSFactor", "UpdateFactor"],
+                });
+            },
+        },
+        others: {
+            CheckBehavior: (k, v) => [v],
+            Method: (k, v) => formatMethod(v),
+        },
     });
-    if (e.Method !== undefined) formatMethod(params, e.Method);
     const es = typeof e.equations === "string" ? [e.equations] : e.equations;
     return ["Coupled", "(", ...params, ")", "{", ...es, "}"];
 };
@@ -49,12 +55,13 @@ type PluginType = {
     Digits?: number;
     Iterations?: number;
 };
+
 const formatPlugin = (e: PluginType) => {
-    const params: string[] = [];
-    const { formatAssignment, formatFlag } = useFormatUtils(params);
-    formatFlag(e, "BreakOnFailure");
-    formatAssignment(e, "Digits");
-    formatAssignment(e, "Iterations");
+    const params = SDeviceFormat(e)({
+        flag: ["BreakOnFailure"],
+        assign: ["Digits", "Iterations"],
+    });
+
     const es: string[] = [];
     for (const i of e.equations) {
         if (typeof i === "string") {
@@ -73,9 +80,9 @@ const formatPlugin = (e: PluginType) => {
     return ["Plugin", "(", ...params, ")", "{", ...es, "}"];
 };
 
-type SingleType = Equation | CoupledType | PluginType;
+type Computation = Equation | CoupledType | PluginType;
 
-const formatSingle = (e: SingleType) => {
+const formatComputation = (e: Computation) => {
     const retval: string[] = [];
     if (typeof e === "string") {
         retval.push(e);
@@ -91,5 +98,5 @@ const formatSingle = (e: SingleType) => {
     return retval;
 };
 
-export { formatSingle };
-export type { SingleType };
+export { formatComputation };
+export type { Computation };
