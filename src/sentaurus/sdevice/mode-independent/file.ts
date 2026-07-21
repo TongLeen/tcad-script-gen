@@ -1,4 +1,4 @@
-import type { FileDefination } from "./definations";
+import type { FileDefination } from "../definations";
 
 type FileType = {
     [k in FileDefination]?: string;

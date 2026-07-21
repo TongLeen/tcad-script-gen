@@ -11,7 +11,7 @@ import {
     type IncompleteIonization,
 } from "./misc";
 import { formatTrap, type Trap } from "./trap";
-import SDeviceFormat from "../format";
+import SDeviceFormat from "../../utils/format";
 
 type PhysicsType<M extends string, D extends string> = (
     | PhysicsConfigGlobal

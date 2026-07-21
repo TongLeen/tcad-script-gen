@@ -1,16 +1,18 @@
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileGenerator } from "./file";
-import { electrodeGenerator } from "./electrode";
-import { physicsGenerator } from "./physics";
-import { mathGenerator } from "./math";
-import { plotGenerator } from "./plot";
-import { solveGenerator } from "./solve";
+
+import { fileGenerator } from "./mode-independent/file";
+import { electrodeGenerator } from "./mode-independent/electrode";
+import { physicsGenerator } from "./mode-independent/physics";
+import { plotGenerator } from "./mode-independent/plot";
+
+import { mathGenerator as mathGenerator_single } from "./single-device/math";
+import { solveGenerator as solveGenerator_single } from "./single-device/solve";
 
 const useSdevice = <M extends string, D extends string>() => {
     let cmds: string[] = [];
 
-    const [api, solve_gen] = solveGenerator();
+    const [api, solve_gen] = solveGenerator_single();
 
     const generate = () => {
         return format(cmds.concat(solve_gen()));
@@ -59,7 +61,7 @@ const useSdevice = <M extends string, D extends string>() => {
         file: fileGenerator(cmds),
         electrode: electrodeGenerator(cmds),
         physics: physicsGenerator<M, D>(cmds),
-        math: mathGenerator<M>(cmds),
+        math: mathGenerator_single<M>(cmds),
         plot: plotGenerator(cmds),
         solve: api,
         raw,

@@ -1,4 +1,4 @@
-import SDeviceFormat from "../format";
+import SDeviceFormat from "../../utils/format";
 
 type Mobility = {
     DopingDependence?: DopingDependence;
